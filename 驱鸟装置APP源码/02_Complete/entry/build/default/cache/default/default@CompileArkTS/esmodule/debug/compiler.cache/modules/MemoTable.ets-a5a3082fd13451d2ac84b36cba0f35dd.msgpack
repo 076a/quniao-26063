@@ -1,0 +1,438 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚ$import relationalStore from '@ohos.data.relationalStore';
+import DeviceDate from 'ets/viewmodel/DeviceData'; // å‡è®¾DeviceDateåœ¨è¿™ä¸ªè·¯å¾„ä¸‹
+import CommonConstants from '../constants/CommonConstants';
+import Rdb from './Rdb';
+import Logger from 'ets/utils/Logger';
+// è®¾å¤‡æ•°æ®çš„æ•°æ®åº“ç±»ï¼ŒåŸºäºRdbç±»ï¼Œæœ‰ä¸šåŠ¡å±æ€§
+export default class DeviceDateTable {
+    // æ„é€ å‡½æ•°ï¼Œæ‰§è¡ŒgetRdbStoreæ–¹æ³•
+    constructor(callback = () => { }) {
+        // å°† deviceDateTable æ”¹ä¸º publicï¼Œä»¥ä¾¿å¤–éƒ¨è®¿é—®
+        this.deviceDateTable = new Rdb(CommonConstants.DEVICE_DATE_TABLE.tableName, CommonConstants.DEVICE_DATE_TABLE.sqlCreate, CommonConstants.DEVICE_DATE_TABLE.columns);
+        this.deviceDateTable.getRdbStore(callback);
+    }
+    // é€šè¿‡deviceDateTableå¯¹è±¡ï¼Œæ‰§è¡ŒåŸRdbç±»ä¸­çš„getRdbStoreæ–¹æ³•ï¼Œä¸ºdeviceDateTableå¯¹è±¡è·å–rdbStoreæ“ä½œå¯¹è±¡
+    getRdbStore(callback = () => { }) {
+        // é€ä¼ å›è°ƒå‡½æ•°
+        this.deviceDateTable.getRdbStore(callback);
+    }
+    // æ’å…¥æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶å•æ¡DeviceDateå¯¹è±¡ï¼Œå’Œå›è°ƒå‡½æ•°
+    insertData(deviceDate, callback) {
+        Logger.info('MemoTable', `Inserting device with name: ${deviceDate.name}`);
+        // ç¡®ä¿IDæ˜¯å”¯ä¸€çš„
+        if (!deviceDate.id || deviceDate.id <= 0) {
+            // å¦‚æœæ²¡æœ‰IDæˆ–IDæ— æ•ˆï¼Œç”Ÿæˆä¸€ä¸ªæ–°çš„å”¯ä¸€ID
+            this.getMaxId((maxId) => {
+                deviceDate.id = maxId + 1;
+                Logger.info('MemoTable', `Generated new ID: ${deviceDate.id} for device: ${deviceDate.name}`);
+                // é€šè¿‡å·¥å…·å‡½æ•°ï¼Œå°†å•æ¡DeviceDateå¯¹è±¡ï¼Œè½¬åŒ–ä¸ºå­˜å‚¨å¥å€¼å¯¹
+                const valueBucket = generateBucket(deviceDate);
+                // æ‰§è¡ŒdeviceDateTableçš„æ’å…¥æ•°æ®æ–¹æ³•ï¼Œé€ä¼ å›è°ƒå‡½æ•°
+                this.deviceDateTable.insertData(valueBucket, (result) => {
+                    Logger.info('MemoTable', `Insert result for device ${deviceDate.name}: ${result}`);
+                    callback(result);
+                });
+            });
+        }
+        else {
+            // å¦‚æœå·²æœ‰æœ‰æ•ˆIDï¼Œç›´æ¥æ’å…¥
+            const valueBucket = generateBucket(deviceDate);
+            this.deviceDateTable.insertData(valueBucket, (result) => {
+                Logger.info('MemoTable', `Insert result for device ${deviceDate.name}: ${result}`);
+                callback(result);
+            });
+        }
+    }
+    // è·å–æœ€å¤§IDçš„æ–¹æ³•
+    getMaxId(callback) {
+        let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+        this.deviceDateTable.query(predicates, (resultSet) => {
+            let maxId = 0;
+            let count = resultSet.rowCount;
+            if (count > 0) {
+                for (let i = 0; i < count; i++) {
+                    resultSet.goToRow(i);
+                    let id = resultSet.getDouble(resultSet.getColumnIndex('id'));
+                    if (id > maxId) {
+                        maxId = id;
+                    }
+                }
+            }
+            Logger.info('MemoTable', `Current max ID: ${maxId}`);
+            callback(maxId);
+        });
+    }
+    // åˆ é™¤æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶å•æ¡DeviceDateå¯¹è±¡ï¼Œå’Œå›è°ƒå‡½æ•°
+    deleteData(deviceDate, callback) {
+        // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+        let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+        // é…ç½®è°“è¯ä»¥åŒ¹é…æ•°æ®è¡¨çš„idåˆ—ä¸­å€¼çš„å­—æ®µï¼Œä¸ºDeviceDateå¯¹è±¡çš„id
+        predicates.equalTo('id', deviceDate.id);
+        // ä½¿ç”¨è°“è¯æ‰§è¡ŒdeviceDateTableçš„åˆ é™¤æ–¹æ³•ï¼Œé€ä¼ å›è°ƒå‡½æ•°
+        this.deviceDateTable.deleteData(predicates, callback);
+    }
+    // æ›´æ–°æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶å•æ¡DeviceDateå¯¹è±¡ï¼Œå’Œå›è°ƒå‡½æ•°
+    updateData(deviceDate, callback) {
+        // æ·»åŠ æ—¥å¿—ï¼Œè®°å½•ä¼ å…¥çš„è®¾å¤‡å¯¹è±¡
+        // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+        let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+        predicates.equalTo('id', deviceDate.id);
+        // ç›´æ¥ä½¿ç”¨ä¼ å…¥çš„è®¾å¤‡å¯¹è±¡åˆ›å»º ValuesBucket
+        const valueBucket = {
+            name: deviceDate.name,
+            description: deviceDate.description,
+            status: deviceDate.status,
+            Color: deviceDate.Color,
+            intervalTime: deviceDate.intervalTime || "",
+            positionX: deviceDate.positionX || "",
+            positionY: deviceDate.positionY || ""
+        };
+        // æ·»åŠ æ—¥å¿—ï¼Œè®°å½•åˆ›å»ºçš„ ValuesBucket
+        Logger.info('MemoTable', `ValuesBucket for device ${deviceDate.id}, autoMode: ${valueBucket.autoMode}, type: ${typeof valueBucket.autoMode}`);
+        // æ‰§è¡ŒdeviceDateTableçš„æ›´æ–°æ•°æ®æ–¹æ³•
+        this.deviceDateTable.updateData(predicates, valueBucket, (result) => {
+            Logger.info('MemoTable', `Update result for device ${deviceDate.id}: ${result}`);
+            callback(result);
+        });
+    }
+    // æŸ¥è¯¢å…¨éƒ¨è®¾å¤‡æ•°æ®çš„æ–¹æ³•
+    query(callback) {
+        // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+        let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+        // ä½¿ç”¨è°“è¯æ‰§è¡ŒdeviceDateTableçš„æŸ¥è¯¢æ–¹æ³•
+        this.deviceDateTable.query(predicates, (resultSet) => {
+            // åˆ›å»ºå±€éƒ¨å˜é‡ï¼Œå­˜å‚¨ç»“æœçš„è¡Œæ•°
+            let count = resultSet.rowCount;
+            // åˆ›å»ºå±€éƒ¨å˜é‡ï¼Œå­˜å‚¨ç»“æœçš„æ•°ç»„
+            let result = [];
+            // å¦‚æœæŸ¥è¯¢çš„ç»“æœä¸º0ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œä¼ å…¥ç©ºæ•°ç»„
+            if (count === 0 || typeof count === 'string') {
+                Logger.info(CommonConstants.TABLE_TAG, 'Query no results.');
+                callback(result);
+            }
+            else {
+                // å¦‚æœæœ‰ç»“æœï¼Œå°†ç»“æœé›†æŒ‡å‘ç¬¬ä¸€è¡Œ
+                resultSet.goToFirstRow();
+                // å¾ªç¯éå†ç»“æœé›†
+                for (let i = 0; i < count; i++) {
+                    // åˆ›å»ºè®¾å¤‡å¯¹è±¡
+                    let device = new DeviceDate(resultSet.getDouble(resultSet.getColumnIndex('id')), resultSet.getString(resultSet.getColumnIndex('name')), resultSet.getString(resultSet.getColumnIndex('description')), resultSet.getString(resultSet.getColumnIndex('status')), resultSet.getString(resultSet.getColumnIndex('Color')), resultSet.getString(resultSet.getColumnIndex('intervalTime')), resultSet.getString(resultSet.getColumnIndex('positionX')), resultSet.getString(resultSet.getColumnIndex('positionY')));
+                    // å°†è®¾å¤‡å¯¹è±¡æ·»åŠ åˆ°ç»“æœæ•°ç»„
+                    result.push(device);
+                    // å°†ç»“æœé›†æŒ‡å‘ä¸‹ä¸€è¡Œ
+                    if (i < count - 1) {
+                        resultSet.goToNextRow();
+                    }
+                }
+                // æ‰§è¡Œå›è°ƒå‡½æ•°ï¼ŒæŠŠæŸ¥è¯¢ç»“æœä¼ å…¥
+                callback(result);
+            }
+        });
+    }
+    // æŸ¥è¯¢å•ä¸ªè®¾å¤‡æ•°æ®çš„æ–¹æ³•
+    queryById(id, callback) {
+        // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+        let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+        predicates.equalTo('id', id);
+        // ä½¿ç”¨è°“è¯æ‰§è¡ŒdeviceDateTableçš„æŸ¥è¯¢æ–¹æ³•
+        this.deviceDateTable.query(predicates, (resultSet) => {
+            // åˆ›å»ºå±€éƒ¨å˜é‡ï¼Œå­˜å‚¨ç»“æœçš„è¡Œæ•°
+            let count = resultSet.rowCount;
+            // å¦‚æœæŸ¥è¯¢çš„ç»“æœä¸º0ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œä¼ å…¥null
+            if (count === 0 || typeof count === 'string') {
+                Logger.info(CommonConstants.TABLE_TAG, `Query no results for ID: ${id}`);
+                callback(null);
+            }
+            else {
+                // å¦‚æœæœ‰ç»“æœï¼Œå°†ç»“æœé›†æŒ‡å‘ç¬¬ä¸€è¡Œ
+                resultSet.goToFirstRow();
+                // åˆ›å»ºè®¾å¤‡å¯¹è±¡
+                let device = new DeviceDate(resultSet.getDouble(resultSet.getColumnIndex('id')), resultSet.getString(resultSet.getColumnIndex('name')), resultSet.getString(resultSet.getColumnIndex('description')), resultSet.getString(resultSet.getColumnIndex('status')), resultSet.getString(resultSet.getColumnIndex('Color')), resultSet.getString(resultSet.getColumnIndex('intervalTime')), resultSet.getString(resultSet.getColumnIndex('positionX')), resultSet.getString(resultSet.getColumnIndex('positionY')));
+                // æ‰§è¡Œå›è°ƒå‡½æ•°ï¼ŒæŠŠæŸ¥è¯¢ç»“æœä¼ å…¥
+                callback(device);
+            }
+        });
+    }
+}
+// å·¥å…·å‡½æ•°ï¼Œå°†DeviceDateå¯¹è±¡çš„æ•°æ®ç»“æ„ï¼Œè½¬åŒ–ä¸ºå­˜å‚¨é”®å€¼å¯¹
+function generateBucket(deviceDate) {
+    let obj = {};
+    obj.id = deviceDate.id;
+    obj.name = deviceDate.name;
+    obj.description = deviceDate.description;
+    obj.status = deviceDate.status;
+    obj.Color = deviceDate.Color;
+    obj.intervalTime = deviceDate.intervalTime || "";
+    obj.positionX = deviceDate.positionX || "";
+    obj.positionY = deviceDate.positionY || "";
+    return obj;
+}
+//# sourceMappingURL=MemoTable.js.mapÂ•Ùe hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.data.relationalStore.d.tsÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceData.etsÙeD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\constants\CommonConstants.etsÙXD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\Rdb.etsÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsÙ^D:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\MemoTable.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath¬shouldEmitJs¯hostModulesInfo¥entryÃÂÙ3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÙ-D:\APPkf\huawei_app\PageAndData02\02_Complete¥entry¥1.0.0Ô  Ù3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÃ’ÔrC’²hostDependencyName®hostModuleName½ets/common/database/MemoTable¥entryC½ets/common/database/MemoTable¥entryÃÚ#Üimport relationalStore from '@ohos.data.relationalStore';
+import  DeviceDate  from 'ets/viewmodel/DeviceData'; // å‡è®¾DeviceDateåœ¨è¿™ä¸ªè·¯å¾„ä¸‹
+import CommonConstants from '../constants/CommonConstants';
+import Rdb from './Rdb';
+import Logger from 'ets/utils/Logger';
+
+// è®¾å¤‡æ•°æ®çš„æ•°æ®åº“ç±»ï¼ŒåŸºäºRdbç±»ï¼Œæœ‰ä¸šåŠ¡å±æ€§
+export default class DeviceDateTable {
+  // å°† deviceDateTable æ”¹ä¸º publicï¼Œä»¥ä¾¿å¤–éƒ¨è®¿é—®
+  public deviceDateTable = new Rdb(CommonConstants.DEVICE_DATE_TABLE.tableName, CommonConstants.DEVICE_DATE_TABLE.sqlCreate,
+    CommonConstants.DEVICE_DATE_TABLE.columns);
+
+  // æ„é€ å‡½æ•°ï¼Œæ‰§è¡ŒgetRdbStoreæ–¹æ³•
+  constructor(callback: Function = () => { }) {
+    this.deviceDateTable.getRdbStore(callback);
+  }
+
+  // é€šè¿‡deviceDateTableå¯¹è±¡ï¼Œæ‰§è¡ŒåŸRdbç±»ä¸­çš„getRdbStoreæ–¹æ³•ï¼Œä¸ºdeviceDateTableå¯¹è±¡è·å–rdbStoreæ“ä½œå¯¹è±¡
+  getRdbStore(callback: Function = () => { }) {
+    // é€ä¼ å›è°ƒå‡½æ•°
+    this.deviceDateTable.getRdbStore(callback);
+  }
+
+  // æ’å…¥æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶å•æ¡DeviceDateå¯¹è±¡ï¼Œå’Œå›è°ƒå‡½æ•°
+  insertData(deviceDate: DeviceDate, callback: Function) {
+    Logger.info('MemoTable', `Inserting device with name: ${deviceDate.name}`);
+    
+    // ç¡®ä¿IDæ˜¯å”¯ä¸€çš„
+    if (!deviceDate.id || deviceDate.id <= 0) {
+      // å¦‚æœæ²¡æœ‰IDæˆ–IDæ— æ•ˆï¼Œç”Ÿæˆä¸€ä¸ªæ–°çš„å”¯ä¸€ID
+      this.getMaxId((maxId: number) => {
+        deviceDate.id = maxId + 1;
+        Logger.info('MemoTable', `Generated new ID: ${deviceDate.id} for device: ${deviceDate.name}`);
+        
+        // é€šè¿‡å·¥å…·å‡½æ•°ï¼Œå°†å•æ¡DeviceDateå¯¹è±¡ï¼Œè½¬åŒ–ä¸ºå­˜å‚¨å¥å€¼å¯¹
+        const valueBucket: relationalStore.ValuesBucket = generateBucket(deviceDate);
+        // æ‰§è¡ŒdeviceDateTableçš„æ’å…¥æ•°æ®æ–¹æ³•ï¼Œé€ä¼ å›è°ƒå‡½æ•°
+        this.deviceDateTable.insertData(valueBucket, (result: number | boolean) => {
+          Logger.info('MemoTable', `Insert result for device ${deviceDate.name}: ${result}`);
+          callback(result);
+        });
+      });
+    } else {
+      // å¦‚æœå·²æœ‰æœ‰æ•ˆIDï¼Œç›´æ¥æ’å…¥
+      const valueBucket: relationalStore.ValuesBucket = generateBucket(deviceDate);
+      this.deviceDateTable.insertData(valueBucket, (result: number | boolean) => {
+        Logger.info('MemoTable', `Insert result for device ${deviceDate.name}: ${result}`);
+        callback(result);
+      });
+    }
+  }
+
+  // è·å–æœ€å¤§IDçš„æ–¹æ³•
+  getMaxId(callback: Function) {
+    let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+    this.deviceDateTable.query(predicates, (resultSet: relationalStore.ResultSet) => {
+      let maxId = 0;
+      let count = resultSet.rowCount;
+      
+      if (count > 0) {
+        for (let i = 0; i < count; i++) {
+          resultSet.goToRow(i);
+          let id = resultSet.getDouble(resultSet.getColumnIndex('id'));
+          if (id > maxId) {
+            maxId = id;
+          }
+        }
+      }
+      
+      Logger.info('MemoTable', `Current max ID: ${maxId}`);
+      callback(maxId);
+    });
+  }
+
+  // åˆ é™¤æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶å•æ¡DeviceDateå¯¹è±¡ï¼Œå’Œå›è°ƒå‡½æ•°
+  deleteData(deviceDate: DeviceDate, callback: Function) {
+    // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+    let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+    // é…ç½®è°“è¯ä»¥åŒ¹é…æ•°æ®è¡¨çš„idåˆ—ä¸­å€¼çš„å­—æ®µï¼Œä¸ºDeviceDateå¯¹è±¡çš„id
+    predicates.equalTo('id', deviceDate.id);
+    // ä½¿ç”¨è°“è¯æ‰§è¡ŒdeviceDateTableçš„åˆ é™¤æ–¹æ³•ï¼Œé€ä¼ å›è°ƒå‡½æ•°
+    this.deviceDateTable.deleteData(predicates, callback);
+  }
+
+  // æ›´æ–°æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶å•æ¡DeviceDateå¯¹è±¡ï¼Œå’Œå›è°ƒå‡½æ•°
+  updateData(deviceDate: DeviceDate, callback: Function) {
+    // æ·»åŠ æ—¥å¿—ï¼Œè®°å½•ä¼ å…¥çš„è®¾å¤‡å¯¹è±¡
+
+    
+    // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+    let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+    predicates.equalTo('id', deviceDate.id);
+    
+    // ç›´æ¥ä½¿ç”¨ä¼ å…¥çš„è®¾å¤‡å¯¹è±¡åˆ›å»º ValuesBucket
+    const valueBucket: relationalStore.ValuesBucket = {
+      name: deviceDate.name,
+      description: deviceDate.description,
+      status: deviceDate.status,
+      Color: deviceDate.Color,
+      intervalTime: deviceDate.intervalTime || "",
+      positionX: deviceDate.positionX || "",
+      positionY: deviceDate.positionY || ""
+    };
+    
+    // æ·»åŠ æ—¥å¿—ï¼Œè®°å½•åˆ›å»ºçš„ ValuesBucket
+    Logger.info('MemoTable', `ValuesBucket for device ${deviceDate.id}, autoMode: ${valueBucket.autoMode}, type: ${typeof valueBucket.autoMode}`);
+    
+    // æ‰§è¡ŒdeviceDateTableçš„æ›´æ–°æ•°æ®æ–¹æ³•
+    this.deviceDateTable.updateData(predicates, valueBucket, (result: boolean) => {
+      Logger.info('MemoTable', `Update result for device ${deviceDate.id}: ${result}`);
+      callback(result);
+    });
+  }
+
+  // æŸ¥è¯¢å…¨éƒ¨è®¾å¤‡æ•°æ®çš„æ–¹æ³•
+  query(callback: Function) {
+    // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+    let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+    
+    // ä½¿ç”¨è°“è¯æ‰§è¡ŒdeviceDateTableçš„æŸ¥è¯¢æ–¹æ³•
+    this.deviceDateTable.query(predicates, (resultSet: relationalStore.ResultSet) => {
+      // åˆ›å»ºå±€éƒ¨å˜é‡ï¼Œå­˜å‚¨ç»“æœçš„è¡Œæ•°
+      let count: number = resultSet.rowCount;
+      // åˆ›å»ºå±€éƒ¨å˜é‡ï¼Œå­˜å‚¨ç»“æœçš„æ•°ç»„
+      let result: Array<DeviceDate> = [];
+      
+      // å¦‚æœæŸ¥è¯¢çš„ç»“æœä¸º0ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œä¼ å…¥ç©ºæ•°ç»„
+      if (count === 0 || typeof count === 'string') {
+        Logger.info(CommonConstants.TABLE_TAG, 'Query no results.');
+        callback(result);
+      } else {
+        // å¦‚æœæœ‰ç»“æœï¼Œå°†ç»“æœé›†æŒ‡å‘ç¬¬ä¸€è¡Œ
+        resultSet.goToFirstRow();
+        
+        // å¾ªç¯éå†ç»“æœé›†
+        for (let i = 0; i < count; i++) {
+          // åˆ›å»ºè®¾å¤‡å¯¹è±¡
+          let device = new DeviceDate(
+            resultSet.getDouble(resultSet.getColumnIndex('id')),
+            resultSet.getString(resultSet.getColumnIndex('name')),
+            resultSet.getString(resultSet.getColumnIndex('description')),
+            resultSet.getString(resultSet.getColumnIndex('status')),
+            resultSet.getString(resultSet.getColumnIndex('Color')),
+            resultSet.getString(resultSet.getColumnIndex('intervalTime')),
+            resultSet.getString(resultSet.getColumnIndex('positionX')),
+            resultSet.getString(resultSet.getColumnIndex('positionY'))
+          );
+          
+          // å°†è®¾å¤‡å¯¹è±¡æ·»åŠ åˆ°ç»“æœæ•°ç»„
+          result.push(device);
+          
+          // å°†ç»“æœé›†æŒ‡å‘ä¸‹ä¸€è¡Œ
+          if (i < count - 1) {
+            resultSet.goToNextRow();
+          }
+        }
+        
+        // æ‰§è¡Œå›è°ƒå‡½æ•°ï¼ŒæŠŠæŸ¥è¯¢ç»“æœä¼ å…¥
+        callback(result);
+      }
+    });
+  }
+
+  // æŸ¥è¯¢å•ä¸ªè®¾å¤‡æ•°æ®çš„æ–¹æ³•
+  queryById(id: number, callback: Function) {
+    // åˆå§‹åŒ–æ“ä½œæ•°æ®åº“çš„è°“è¯å¯¹è±¡
+    let predicates = new relationalStore.RdbPredicates(CommonConstants.DEVICE_DATE_TABLE.tableName);
+    predicates.equalTo('id', id);
+
+    // ä½¿ç”¨è°“è¯æ‰§è¡ŒdeviceDateTableçš„æŸ¥è¯¢æ–¹æ³•
+    this.deviceDateTable.query(predicates, (resultSet: relationalStore.ResultSet) => {
+      // åˆ›å»ºå±€éƒ¨å˜é‡ï¼Œå­˜å‚¨ç»“æœçš„è¡Œæ•°
+      let count: number = resultSet.rowCount;
+      // å¦‚æœæŸ¥è¯¢çš„ç»“æœä¸º0ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œä¼ å…¥null
+      if (count === 0 || typeof count === 'string') {
+        Logger.info(CommonConstants.TABLE_TAG, `Query no results for ID: ${id}`);
+        callback(null);
+      } else {
+        // å¦‚æœæœ‰ç»“æœï¼Œå°†ç»“æœé›†æŒ‡å‘ç¬¬ä¸€è¡Œ
+        resultSet.goToFirstRow();
+        
+        // åˆ›å»ºè®¾å¤‡å¯¹è±¡
+        let device = new DeviceDate(
+          resultSet.getDouble(resultSet.getColumnIndex('id')),
+          resultSet.getString(resultSet.getColumnIndex('name')),
+          resultSet.getString(resultSet.getColumnIndex('description')),
+          resultSet.getString(resultSet.getColumnIndex('status')),
+          resultSet.getString(resultSet.getColumnIndex('Color')),
+          resultSet.getString(resultSet.getColumnIndex('intervalTime')),
+          resultSet.getString(resultSet.getColumnIndex('positionX')),
+          resultSet.getString(resultSet.getColumnIndex('positionY'))
+        );
+        
+        // æ‰§è¡Œå›è°ƒå‡½æ•°ï¼ŒæŠŠæŸ¥è¯¢ç»“æœä¼ å…¥
+        callback(device);
+      }
+    });
+  }
+}
+
+// å·¥å…·å‡½æ•°ï¼Œå°†DeviceDateå¯¹è±¡çš„æ•°æ®ç»“æ„ï¼Œè½¬åŒ–ä¸ºå­˜å‚¨é”®å€¼å¯¹
+function generateBucket(deviceDate: DeviceDate): relationalStore.ValuesBucket {
+  let obj: relationalStore.ValuesBucket = {};
+  obj.id = deviceDate.id;
+  obj.name = deviceDate.name;
+  obj.description = deviceDate.description;
+  obj.status = deviceDate.status;
+  obj.Color = deviceDate.Color;
+  obj.intervalTime = deviceDate.intervalTime || "";
+  obj.positionX = deviceDate.positionX || "";
+  obj.positionY = deviceDate.positionY || "";
+  
+  return obj;
+}ÀÔrD•º@ohos.data.relationalStore¼../constants/CommonConstants¸ets/viewmodel/DeviceData°ets/utils/Logger¥./RdbÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙe hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.data.relationalStore.d.tsAÃªoh-resolveÂEAÂÙeD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\constants\CommonConstants.etsAÃªoh-resolveÂEAÂÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceData.etsAÃªoh-resolveÂEAÂÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂEAÂÙXD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\Rdb.etsAÃªoh-resolveÂ“ÔrF–§version¤fileªsourceRoot§sources¥names¨mappings¬MemoTable.js ‘­MemoTable.etsÜ ©–”    ”  ”  ”  ”8  8”9  9˜”   ” ” ” ”1 3”2 4”3 5”ÌH ÌJ–”   ” ” ” ”: :”; ;–”   ” ”
+ 
+” ” ” –”   ” ” ” ”% %”& &’”   ” –”   ” ” ” ” ”$ $’” ” —” ” ” #” &”  (”# +”$ ,’” ”- 'Ü ” 		” 	” 	”# 	”& 	"”' 	#”6 	2”7 	3”ÌH 	ÌD”ÌI 	ÌE”ÌR 	ÌN”ÌT 	ÌP”Ìc 	Ì_”Ìd 	Ì`”Ìu 	Ìq”Ìv 	Ìr”Ì 	Ì{”Ì 
+”Ì 
+”Ì‘ 
+”Ì¢ 
+%”Ì£ 
+&”Ìª 
+-”Ì« 
+.”Ì¬ 
+/š” ” ” 	” ” ”( $”) %”1 -”2 .”3 /’” ” ’” ”ÌR ÌP˜” ” ” ” #” &”  (”# +”$ ,’” ” š” ” ” 	” ” ”( $”) %”1 -”2 .”3 /’” ” ’” ”% #–” ” ” ” #” %”# 7” ” 
+” ” ” ” ”! ”Ì@ <”ÌJ ÌF”ÌK ÌG”ÌO ÌK”ÌQ ÌM”ÌR ÌN”ÌS ÌO’” ” ” ” ” 	” ” ” ” ”( $”) %”+ '”/ +”0 ,”2 .’” ”% ™” ” 
+” ” ” ” ”  "”" $”$ &™” ” ” ” ”  ”% ”(  ”) !”* "Ü ”  ”  ”  ”  ”  ”'  ”)  !”>  6”ÌH  Ì@”ÌI  ÌA”ÌK  ÌC”Ì[  ÌS”Ìe  Ì]”Ìf  Ì^”Ìj  Ìb”Ìl  Ìd”Ìm  Ìe”Ìn  Ìf’” "”2 "*™” #” #”! #”$ #:”2 #ÌH”3 #ÌI”= #ÌS”> #ÌT”? #ÌU’” $”2 $*” %” %” %”$ %”% %”/ %'”0 %(”; %3”= %5”> %6”ÌD %ÌN”ÌF %ÌP”ÌH %ÌRÜ ” &
+” &” &” &”  &”+ &!”- &#”ÌI &?”ÌS &ÌI”ÌT &ÌJ”ÌX &ÌN”Ì] &ÌS”Ìc &ÌY”Ìe &Ì[”Ìf &Ì\”Ìg &Ì]–” '
+” '” '”# '”$ '”% '”” (” (	” (
+” (”” )” )” )” )	‘”	 *‘” *’” +” +™” ,” ,” ,”  ,8”. ,ÌF”/ ,ÌG”9 ,ÌQ”: ,ÌR”; ,ÌS” -” -
+” -”  -”! -”+ -%”, -&”7 -1”9 -3”: -4”Ì@ -ÌL”ÌB -ÌN”ÌD -ÌPÜ ” .” .” .” .” .”' .”) .!”ÌE .=”ÌO .ÌG”ÌP .ÌH”ÌT .ÌL”ÌY .ÌQ”Ì_ .ÌW”Ìa .ÌY”Ìb .ÌZ”Ìc .Ì[–” /” /” /” /”  /”! /”” 0” 0” 0” 0	‘”	 1’” 2” 2’” 4” 4”” 5” 5
+” 5” 5Ü ” 6” 6” 6” 6” 6”, 6(”- 6)”: 66”; 67”ÌJ 6ÌF”ÌK 6ÌG”Ì\ 6ÌX”Ì] 6ÌY”Ìf 6Ìb”Ìg 6Ìc”Ìh 6Ìd” 7” 7” 7	” 7” 7”" 7”# 7”- 7)”/ 7+”0 7,”9 7ÌP”; 7ÌR”= 7ÌT–” 8” 8
+” 8” 8” 8” 8˜” 9” 9
+” 9” 9”! 9”" 9”* 9$”+ 9%–” ;” ;
+” ;” ;” ;” ;” <” <” <” <” <” <”  <”! <”$ <”) <!”+ <#”, <$”. <&”0 <(˜” =
+” =” =”% =”& =”' =”( =”) =Ü ” >
+” >” >” >”& >”' >”0 >&”1 >'”: >0”; >1”ÌI >?”ÌJ >Ì@”ÌN >ÌD”ÌO >ÌE”ÌP >ÌF”ÌQ >ÌG–” ?
+” ?” ?” ?”" ?”$ ?•” Ì@” Ì@”  Ì@”" Ì@”# Ì@‘” ÌA‘” ÌB	‘” ÌCœ” ÌE” ÌE” ÌE” ÌE” ÌE”# ÌE”% ÌE”8 ÌE2”= ÌE7”? ÌE9”Ì@ ÌE:”ÌA ÌE;–” ÌF” ÌF” ÌF” ÌF” ÌF” ÌF”” ÌG”	 ÌG”
+ ÌG” ÌG’” ÌH” ÌH’” ÌJ”% ÌJ#–” ÌK” ÌK” ÌK” ÌK#” ÌK%”# ÌK7’” ÌL” ÌLÜ ” ÌM” ÌM” ÌM” ÌM” ÌM”, ÌM(”- ÌM)”: ÌM6”; ÌM7”ÌJ ÌMÌF”ÌK ÌMÌG”Ì\ ÌMÌX”Ì] ÌMÌY”Ìf ÌMÌb”Ìg ÌMÌc”Ìh ÌMÌd’” ÌN”/ ÌN+œ” ÌO” ÌO” ÌO” ÌO” ÌO” ÌO”! ÌO”+ ÌO'”, ÌO(”. ÌO*”/ ÌO+”0 ÌO,’” ÌP”, ÌP(œ” ÌQ” ÌQ” ÌQ	” ÌQ” ÌQ”' ÌQ#”( ÌQ$”2 ÌQ.”4 ÌQ0”< ÌQ8”= ÌQ9”> ÌQ:’” ÌR” ÌR’” ÌT”% ÌT#–” ÌU” ÌU” ÌU” ÌU#” ÌU%”# ÌU7’” ÌV” ÌV’” ÌY” ÌYÜ ” ÌZ” ÌZ” ÌZ” ÌZ” ÌZ”, ÌZ(”- ÌZ)”: ÌZ6”; ÌZ7”ÌJ ÌZÌF”ÌK ÌZÌG”Ì\ ÌZÌX”Ì] ÌZÌY”Ìf ÌZÌb”Ìg ÌZÌc”Ìh ÌZÌdœ” Ì[” Ì[” Ì[” Ì[” Ì[” Ì[”! Ì[”+ Ì['”, Ì[(”. Ì[*”/ Ì[+”0 Ì[,’” Ì]”% Ì]!”” Ì^” Ì^
+” Ì^” Ì^6–” Ì_” Ì_
+” Ì_” Ì_” Ì_”! Ì_–” Ì`” Ì`” Ì`”# Ì`”$ Ì`”/ Ì`)–” Ìa” Ìa” Ìa” Ìa” Ìa”% Ìa–” Ìb” Ìb” Ìb” Ìb” Ìb”# Ìb˜” Ìc” Ìc” Ìc”$ Ìc”% Ìc”1 Ìc+”5 Ìc/”7 Ìc1˜” Ìd” Ìd” Ìd”! Ìd”" Ìd”+ Ìd%”/ Ìd)”1 Ìd+˜” Ìe” Ìe” Ìe”! Ìe”" Ìe”+ Ìe%”/ Ìe)”1 Ìe+’”	 Ìf”
+ Ìf’” Ìh”" ÌhÜ ” Ìi” Ìi
+” Ìi” Ìi” Ìi” Ìi”! Ìi”< Ìi8”ÌF ÌiÌB”ÌG ÌiÌC”ÌI ÌiÌE”ÌX ÌiÌT”Ìc ÌiÌ_”Ìd ÌiÌ`”Ìl ÌiÌh”Ìw ÌiÌs”Ì~ ÌiÌz”Ì‰ ÌiÌ…”ÌŠ ÌiÌ†”Ì’ ÌiÌ”Ì” ÌiÌ”Ì• ÌiÌ‘”Ì– ÌiÌ’’” Ìk”# ÌkŸ” Ìl” Ìl” Ìl	” Ìl” Ìl”' Ìl#”( Ìl$”2 Ìl.”4 Ìl0”? Ìl;”ÌA Ìl=”ÌB Ìl>”ÌH ÌlÌM”ÌJ ÌlÌO”ÌL ÌlÌQÜ ” Ìm” Ìm” Ìm” Ìm” Ìm”# Ìm”% Ìm”ÌA Ìm;”ÌK ÌmÌE”ÌL ÌmÌF”ÌN ÌmÌH”ÌS ÌmÌM”ÌY ÌmÌS”Ì[ ÌmÌU”Ì\ ÌmÌV”Ì] ÌmÌW–” Ìn” Ìn” Ìn” Ìn” Ìn” Ìn”” Ìo”	 Ìo”
+ Ìo” Ìo’” Ìp” Ìp’” Ìr” Ìr”” Ìs”	 Ìs”
+ Ìs” Ìs’” Ìt” ÌtÜ ” Ìu” Ìu” Ìu” Ìu” Ìu”, Ìu(”- Ìu)”: Ìu6”; Ìu7”ÌJ ÌuÌF”ÌK ÌuÌG”Ì\ ÌuÌX”Ì] ÌuÌY”Ìf ÌuÌb”Ìg ÌuÌc”Ìh ÌuÌd’” Ìw”% Ìw!” Ìx” Ìx” Ìx	” Ìx” Ìx”" Ìx”# Ìx”- Ìx)”/ Ìx+”0 Ìx,”9 ÌxÌP”; ÌxÌR”= ÌxÌT’” Ìy” Ìy˜” Ìz” Ìz
+” Ìz” Ìz”! Ìz#”" Ìz$”* Ìz,”+ Ìz-’” Ì{” Ì{–” Ì|” Ì|
+” Ì|” Ì|&” Ì|(” Ì|)’” Ì~”% Ì~›” Ì” Ì
+” Ì” Ì” Ì” Ì”& Ì ”+ Ì%”0 Ì*”8 Ì2”: Ì4œ” Ì€” Ì€” Ì€” Ì€” Ì€”+ Ì€#”, Ì€$”5 Ì€-”7 Ì€/”ÌJ Ì€ÌB”ÌK Ì€ÌC”ÌL Ì€ÌD–” Ì” Ì” Ì” Ì”  Ì”! Ì‘” Ì‚‘” Ì‚’” Ìƒ”" Ìƒ–” Ì„” Ì„” Ì„”& Ì„”( Ì„ ”) Ì„!’” Ì†” Ì†” Ì‡” Ì‡” Ì‡” Ì‡” Ì‡” Ì‡”  Ì‡”! Ì‡”$ Ì‡”) Ì‡!”+ Ì‡#”, Ì‡$”. Ì‡&”0 Ì‡(’” Ìˆ
+” ÌˆÜ h” Ì‰
+” Ì‰” Ì‰”! Ì‰”% Ì‰”/ Ì‰%”0 ÌŠ”9 ÌŠ”: ÌŠ”ÌC ÌŠ”ÌD ÌŠ ”ÌM ÌŠ)”ÌN ÌŠ*”Ì\ ÌŠ8”Ì] ÌŠ9”Ìa ÌŠ=”Ìb ÌŠ>”Ìc ÌŠ?”Ìe Ì‹”Ìn Ì‹”Ìo Ì‹”Ìx Ì‹”Ìy Ì‹ ”Ì‚ Ì‹)”Ìƒ Ì‹*”Ì‘ Ì‹8”Ì’ Ì‹9”Ì˜ Ì‹?”Ì™ Ì‹Ì@”Ìš Ì‹ÌA”Ìœ ÌŒ”Ì¥ ÌŒ”Ì¦ ÌŒ”Ì¯ ÌŒ”Ì° ÌŒ ”Ì¹ ÌŒ)”Ìº ÌŒ*”ÌÈ ÌŒ8”ÌÉ ÌŒ9”ÌÖ ÌŒÌF”Ì× ÌŒÌG”ÌØ ÌŒÌH”ÌÚ Ì”Ìã Ì”Ìä Ì”Ìí Ì”Ìî Ì ”Ì÷ Ì)”Ìø Ì*”Í Ì8”Í Ì9”Í ÌÌA”Í ÌÌB”Í ÌÌC”Í Ì”Í Ì”Í Ì”Í& Ì”Í' Ì ”Í0 Ì)”Í1 Ì*”Í? Ì8”Í@ Ì9”ÍG ÌÌ@”ÍH ÌÌA”ÍI ÌÌB”ÍK Ì”ÍT Ì”ÍU Ì”Í^ Ì”Í_ Ì ”Íh Ì)”Íi Ì*”Íw Ì8”Íx Ì9”Í† ÌÌG”Í‡ ÌÌH”Íˆ ÌÌI”ÍŠ Ì”Í“ Ì”Í” Ì”Í Ì”Í Ì ”Í§ Ì)”Í¨ Ì*”Í¶ Ì8”Í· Ì9”ÍÂ ÌÌD”ÍÃ ÌÌE”ÍÄ ÌÌF”ÍÆ Ì‘”ÍÏ Ì‘”ÍĞ Ì‘”ÍÙ Ì‘”ÍÚ Ì‘ ”Íã Ì‘)”Íä Ì‘*”Íò Ì‘8”Íó Ì‘9”Íş Ì‘ÌD”Íÿ Ì‘ÌE”Í  Ì‘ÌF”Í Ì’”Í Ì’’” Ì”
+”# Ì”˜” Ì•
+” Ì•” Ì•” Ì•”  Ì•”& Ì•”' Ì•”( Ì•’” Ì—
+”  Ì—˜” Ì˜
+” Ì˜” Ì˜” Ì˜”! Ì˜”$ Ì˜”% Ì˜”' Ì˜–” Ì™”! Ì™”" Ì™”- Ì™!”/ Ì™#”0 Ì™$‘” Ìš‘” Ì›	’” Ì”! Ì–” Ì” Ì” Ì” Ì”  Ì”! Ì‘” ÌŸ”” Ì ”	 Ì ”
+ Ì ” Ì ’” Ì¡” Ì¡’” Ì£” Ì£–” Ì¤” Ì¤” Ì¤” Ì¤” Ì¤” Ì¤*’” Ì¥” Ì¥Ü ” Ì¦” Ì¦” Ì¦” Ì¦” Ì¦”, Ì¦(”- Ì¦)”: Ì¦6”; Ì¦7”ÌJ Ì¦ÌF”ÌK Ì¦ÌG”Ì\ Ì¦ÌX”Ì] Ì¦ÌY”Ìf Ì¦Ìb”Ìg Ì¦Ìc”Ìh Ì¦Ìdš” Ì§” Ì§” Ì§” Ì§” Ì§” Ì§”! Ì§”# Ì§”$ Ì§ ”% Ì§!’” Ì©”% Ì©!” Ìª” Ìª” Ìª	” Ìª” Ìª”" Ìª”# Ìª”- Ìª)”/ Ìª+”0 Ìª,”9 ÌªÌP”; ÌªÌR”= ÌªÌT’” Ì«” Ì«˜” Ì¬” Ì¬
+” Ì¬” Ì¬”! Ì¬#”" Ì¬$”* Ì¬,”+ Ì¬-’” Ì­”& Ì­ ›” Ì®” Ì®
+” Ì®” Ì®” Ì®” Ì®”& Ì® ”+ Ì®%”0 Ì®*”8 Ì®2”: Ì®4” Ì¯” Ì¯” Ì¯” Ì¯” Ì¯”+ Ì¯#”, Ì¯$”5 Ì¯-”7 Ì¯/”ÌS Ì¯ÌK”ÌU Ì¯ÌM”ÌW Ì¯ÌO”ÌX Ì¯ÌP”ÌY Ì¯ÌQ–” Ì°” Ì°” Ì°” Ì°” Ì°” Ì°‘” Ì±‘” Ì±’” Ì²”" Ì²–” Ì³” Ì³” Ì³”& Ì³”( Ì³ ”) Ì³!’” Ìµ” ÌµÜ h” Ì¶” Ì¶” Ì¶” Ì¶”! Ì¶”+ Ì¶#”, Ì·
+”5 Ì·”6 Ì·”? Ì·”Ì@ Ì·”ÌI Ì·'”ÌJ Ì·(”ÌX Ì·6”ÌY Ì·7”Ì] Ì·;”Ì^ Ì·<”Ì_ Ì·=”Ìa Ì¸
+”Ìj Ì¸”Ìk Ì¸”Ìt Ì¸”Ìu Ì¸”Ì~ Ì¸'”Ì Ì¸(”Ì Ì¸6”Ì Ì¸7”Ì” Ì¸=”Ì• Ì¸>”Ì– Ì¸?”Ì˜ Ì¹
+”Ì¡ Ì¹”Ì¢ Ì¹”Ì« Ì¹”Ì¬ Ì¹”Ìµ Ì¹'”Ì¶ Ì¹(”ÌÄ Ì¹6”ÌÅ Ì¹7”ÌÒ Ì¹ÌD”ÌÓ Ì¹ÌE”ÌÔ Ì¹ÌF”ÌÖ Ìº
+”Ìß Ìº”Ìà Ìº”Ìé Ìº”Ìê Ìº”Ìó Ìº'”Ìô Ìº(”Í Ìº6”Í Ìº7”Í Ìº?”Í ÌºÌ@”Í ÌºÌA”Í Ì»
+”Í Ì»”Í Ì»”Í" Ì»”Í# Ì»”Í, Ì»'”Í- Ì»(”Í; Ì»6”Í< Ì»7”ÍC Ì»>”ÍD Ì»?”ÍE Ì»Ì@”ÍG Ì¼
+”ÍP Ì¼”ÍQ Ì¼”ÍZ Ì¼”Í[ Ì¼”Íd Ì¼'”Íe Ì¼(”Ís Ì¼6”Ít Ì¼7”Í‚ Ì¼ÌE”Íƒ Ì¼ÌF”Í„ Ì¼ÌG”Í† Ì½
+”Í Ì½”Í Ì½”Í™ Ì½”Íš Ì½”Í£ Ì½'”Í¤ Ì½(”Í² Ì½6”Í³ Ì½7”Í¾ Ì½ÌB”Í¿ Ì½ÌC”ÍÀ Ì½ÌD”ÍÂ Ì¾
+”ÍË Ì¾”ÍÌ Ì¾”ÍÕ Ì¾”ÍÖ Ì¾”Íß Ì¾'”Íà Ì¾(”Íî Ì¾6”Íï Ì¾7”Íú Ì¾ÌB”Íû Ì¾ÌC”Íü Ì¾ÌD”Íı Ì¿	”Íş Ì¿
+’” ÌÁ”! ÌÁ–” ÌÂ” ÌÂ” ÌÂ” ÌÂ”  ÌÂ”! ÌÂ‘” ÌÃ”” ÌÄ”	 ÌÄ”
+ ÌÄ” ÌÄ’” ÌÅ” ÌÅ‘” ÌÆ’”  ÌÈ ”# ÌÈ#•”  ÌÉ ”	 ÌÉ	” ÌÉ” ÌÉ”" ÌÉ.–” ÌÊ” ÌÊ” ÌÊ	” ÌÊ*” ÌÊ,” ÌÊ-™” ÌË” ÌË” ÌË”
+ ÌË” ÌË” ÌË” ÌË” ÌË” ÌË™” ÌÌ” ÌÌ” ÌÌ” ÌÌ
+” ÌÌ” ÌÌ” ÌÌ” ÌÌ” ÌÌ™” ÌÍ” ÌÍ” ÌÍ” ÌÍ” ÌÍ”  ÌÍ”! ÌÍ”, ÌÍ*”- ÌÍ+™” ÌÎ” ÌÎ” ÌÎ” ÌÎ” ÌÎ” ÌÎ” ÌÎ”" ÌÎ ”# ÌÎ!™” ÌÏ” ÌÏ” ÌÏ” ÌÏ” ÌÏ” ÌÏ” ÌÏ”  ÌÏ”! ÌÏ›” ÌĞ” ÌĞ” ÌĞ” ÌĞ” ÌĞ”! ÌĞ”" ÌĞ ”. ÌĞ,”2 ÌĞ0”4 ÌĞ2”5 ÌĞ3›” ÌÑ” ÌÑ” ÌÑ” ÌÑ” ÌÑ” ÌÑ” ÌÑ”( ÌÑ&”, ÌÑ*”. ÌÑ,”/ ÌÑ-›” ÌÒ” ÌÒ” ÌÒ” ÌÒ” ÌÒ” ÌÒ” ÌÒ”( ÌÒ&”, ÌÒ*”. ÌÒ,”/ ÌÒ-”” ÌÔ” ÌÔ	” ÌÔ” ÌÔ’”  ÌÕ ” ÌÕÔrG–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ ª‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ì ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ÔrH’§missing¦pluginÃ¦genAbcÂÔ  ÔrI”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache•ÔrJ•¤type¥start£endªspecifiers¦source±ImportDeclaration 9‘ÔrK”¤type¥start£end¥local¶ImportDefaultSpecifierÔrL”¤type¥start£end¤nameªIdentifier¯relationalStoreÔrM•¤type¥start£end¥value£raw§Literal8º@ohos.data.relationalStore¼'@ohos.data.relationalStore'J±ImportDeclaration;Ìm‘K¶ImportDefaultSpecifierÌBÌLLªIdentifierÌBÌLªDeviceDateM§LiteralÌRÌl¸ets/viewmodel/DeviceDataº'ets/viewmodel/DeviceData'J±ImportDeclarationÌ…ÌÀ‘K¶ImportDefaultSpecifierÌŒÌ›LªIdentifierÌŒÌ›¯CommonConstantsM§LiteralÌ¡Ì¿¼../constants/CommonConstants¾'../constants/CommonConstants'J±ImportDeclarationÌÂÌÚ‘K¶ImportDefaultSpecifierÌÉÌÌLªIdentifierÌÉÌÌ£RdbM§LiteralÌÒÌÙ¥./Rdb§'./Rdb'J±ImportDeclarationÌÜÍ‘K¶ImportDefaultSpecifierÌãÌéLªIdentifierÌãÌé¦LoggerM§LiteralÌïÍ°ets/utils/Logger²'ets/utils/Logger'

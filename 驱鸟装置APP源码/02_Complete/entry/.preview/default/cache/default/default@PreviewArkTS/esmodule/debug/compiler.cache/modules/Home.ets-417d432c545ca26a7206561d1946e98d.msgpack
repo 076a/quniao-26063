@@ -1,0 +1,896 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚWcif (!("finalizeConstruction" in ViewPU.prototype)) {
+    Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
+}
+import { EditDialog } from './EditDialog';
+import { AddDialog } from './AddDialog';
+import DeviceSearch from './DeviceSearch';
+import DeviceDate from '../viewmodel/DeviceData';
+import DeviceItem from '../viewmodel/DeviceItem';
+import { router } from '@kit.ArkUI';
+import MemoTable from 'ets/common/database/MemoTable';
+import Logger from 'ets/utils/Logger';
+export default class Home extends ViewPU {
+    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
+        super(parent, __localStorage, elmtId, extraInfo);
+        if (typeof paramsLambda === "function") {
+            this.paramsGenerator_ = paramsLambda;
+        }
+        this.__NameEdit = new ObservedPropertySimplePU('', this, "NameEdit");
+        this.__DescribeEdit = new ObservedPropertySimplePU('', this, "DescribeEdit");
+        this.__showEditDialog = new ObservedPropertySimplePU(false, this, "showEditDialog");
+        this.__isAddDialogShow = new ObservedPropertySimplePU(false, this, "isAddDialogShow");
+        this.__memoList = new ObservedPropertyObjectPU([], this, "memoList");
+        this.originDevice = [];
+        this.__order = new ObservedPropertySimplePU(true, this, "order");
+        this.__keywords = new ObservedPropertySimplePU('', this, "keywords");
+        this.editingMemoIndex = -1;
+        this.__currentId = new ObservedPropertySimplePU(-1, this, "currentId");
+        this.cleanKeywords = () => {
+            this.keywords = '';
+        };
+        this.MemoTable = new MemoTable(() => {
+        });
+        this.createMemo = () => {
+            const newMemo = new DeviceDate(0, this.NameEdit, this.DescribeEdit);
+            this.MemoTable.insertData(newMemo, (id) => {
+                newMemo.id = id;
+                this.originDevice.push(newMemo);
+                this.memoList = this.originDevice;
+            });
+            this.closeDialog();
+        };
+        this.clickMemo = (memo) => {
+            router.pushUrl({
+                url: 'view/Page',
+                params: { id: memo.id }
+            });
+        };
+        this.deleteMemo = (index) => {
+            if (index !== -1) {
+                this.MemoTable.deleteData(this.originDevice[index], () => {
+                    this.originDevice.splice(index, 1);
+                    this.memoList = this.originDevice;
+                    this.closeDialog();
+                });
+            }
+        };
+        this.editMemo = () => {
+            if (this.editingMemoIndex >= 0 && this.editingMemoIndex < this.memoList.length) {
+                // èŽ·å–å½“å‰æ­£åœ¨ç¼–è¾‘çš„è®¾å¤‡
+                const currentDevice = this.memoList[this.editingMemoIndex];
+                // åˆ›å»ºä¸€ä¸ªæ–°çš„è®¾å¤‡å¯¹è±¡ï¼Œä¿ç•™æ‰€æœ‰åŽŸå§‹å±žæ€§ï¼Œåªæ›´æ–°åç§°å’Œæè¿°
+                const updatedDevice = new DeviceDate(currentDevice.id, this.NameEdit, this.DescribeEdit, currentDevice.status, currentDevice.Color, currentDevice.intervalTime, currentDevice.positionX, currentDevice.positionY);
+                // æ›´æ–°è®¾å¤‡æ•°æ®
+                this.MemoTable.updateData(updatedDevice, (result) => {
+                    if (result) {
+                        // é‡æ–°åŠ è½½æ•°æ®
+                        this.loadData();
+                    }
+                    this.closeDialog();
+                });
+            }
+        };
+        this.openEditDialog = (index) => {
+            this.editingMemoIndex = index;
+            if (index >= 0 && index < this.memoList.length) {
+                const device = this.memoList[index];
+                this.NameEdit = device.name;
+                this.DescribeEdit = device.description;
+                // è®°å½•å½“å‰ç¼–è¾‘çš„è®¾å¤‡çš„å®Œæ•´ä¿¡æ¯
+                Logger.info('Home', `Opening edit dialog for device: ${JSON.stringify(device)}`);
+            }
+            this.showEditDialog = true;
+        };
+        this.saveMemo = () => {
+            if (this.editingMemoIndex !== -1) {
+                const memo = this.originDevice[this.editingMemoIndex];
+                // åˆ›å»ºä¸€ä¸ªæ–°çš„è®¾å¤‡å¯¹è±¡ï¼Œä¿ç•™æ‰€æœ‰åŽŸå§‹å±žæ€§ï¼Œåªæ›´æ–°åç§°å’Œæè¿°
+                const updatedMemo = new DeviceDate(memo.id, this.NameEdit, this.DescribeEdit, memo.status, memo.Color, memo.intervalTime, memo.positionX, memo.positionY);
+                this.MemoTable.updateData(updatedMemo, (result) => {
+                    if (result) {
+                        // é‡æ–°åŠ è½½æ•°æ®
+                        this.loadData();
+                    }
+                    this.closeDialog();
+                });
+            }
+        };
+        this.__addContent = new ObservedPropertySimplePU(''
+        // å…³é—­å¼¹çª—çš„æ–¹æ³•
+        , this, "addContent");
+        this.closeDialog = () => {
+            this.showEditDialog = false;
+            this.addContent = '';
+            this.isAddDialogShow = false;
+            this.NameEdit = '';
+            this.DescribeEdit = '';
+            this.editingMemoIndex = -1;
+        };
+        this.addMemo = () => {
+            if (this.NameEdit.length > 0) {
+                let maxId = 0;
+                // æ‰¾å‡ºå½“å‰æœ€å¤§ID
+                if (this.originDevice.length > 0) {
+                    this.originDevice.forEach(device => {
+                        if (device.id > maxId) {
+                            maxId = device.id;
+                        }
+                    });
+                }
+                // åˆ›å»ºæ–°è®¾å¤‡ï¼Œç¡®ä¿IDå”¯ä¸€
+                const newMemo = new DeviceDate(maxId + 1, this.NameEdit, this.DescribeEdit);
+                this.MemoTable.insertData(newMemo, (result) => {
+                    if (result) {
+                        // é‡æ–°åŠ è½½æ•°æ®
+                        this.loadData();
+                    }
+                    this.closeDialog();
+                });
+            }
+        };
+        this.setInitiallyProvidedValue(params);
+        this.declareWatch("order", this.onOrderChange);
+        this.declareWatch("keywords", this.onKeywordsChange);
+        this.finalizeConstruction();
+    }
+    setInitiallyProvidedValue(params) {
+        if (params.NameEdit !== undefined) {
+            this.NameEdit = params.NameEdit;
+        }
+        if (params.DescribeEdit !== undefined) {
+            this.DescribeEdit = params.DescribeEdit;
+        }
+        if (params.showEditDialog !== undefined) {
+            this.showEditDialog = params.showEditDialog;
+        }
+        if (params.isAddDialogShow !== undefined) {
+            this.isAddDialogShow = params.isAddDialogShow;
+        }
+        if (params.memoList !== undefined) {
+            this.memoList = params.memoList;
+        }
+        if (params.originDevice !== undefined) {
+            this.originDevice = params.originDevice;
+        }
+        if (params.order !== undefined) {
+            this.order = params.order;
+        }
+        if (params.keywords !== undefined) {
+            this.keywords = params.keywords;
+        }
+        if (params.editingMemoIndex !== undefined) {
+            this.editingMemoIndex = params.editingMemoIndex;
+        }
+        if (params.currentId !== undefined) {
+            this.currentId = params.currentId;
+        }
+        if (params.cleanKeywords !== undefined) {
+            this.cleanKeywords = params.cleanKeywords;
+        }
+        if (params.MemoTable !== undefined) {
+            this.MemoTable = params.MemoTable;
+        }
+        if (params.createMemo !== undefined) {
+            this.createMemo = params.createMemo;
+        }
+        if (params.clickMemo !== undefined) {
+            this.clickMemo = params.clickMemo;
+        }
+        if (params.deleteMemo !== undefined) {
+            this.deleteMemo = params.deleteMemo;
+        }
+        if (params.editMemo !== undefined) {
+            this.editMemo = params.editMemo;
+        }
+        if (params.openEditDialog !== undefined) {
+            this.openEditDialog = params.openEditDialog;
+        }
+        if (params.saveMemo !== undefined) {
+            this.saveMemo = params.saveMemo;
+        }
+        if (params.addContent !== undefined) {
+            this.addContent = params.addContent;
+        }
+        if (params.closeDialog !== undefined) {
+            this.closeDialog = params.closeDialog;
+        }
+        if (params.addMemo !== undefined) {
+            this.addMemo = params.addMemo;
+        }
+    }
+    updateStateVars(params) {
+    }
+    purgeVariableDependenciesOnElmtId(rmElmtId) {
+        this.__NameEdit.purgeDependencyOnElmtId(rmElmtId);
+        this.__DescribeEdit.purgeDependencyOnElmtId(rmElmtId);
+        this.__showEditDialog.purgeDependencyOnElmtId(rmElmtId);
+        this.__isAddDialogShow.purgeDependencyOnElmtId(rmElmtId);
+        this.__memoList.purgeDependencyOnElmtId(rmElmtId);
+        this.__order.purgeDependencyOnElmtId(rmElmtId);
+        this.__keywords.purgeDependencyOnElmtId(rmElmtId);
+        this.__currentId.purgeDependencyOnElmtId(rmElmtId);
+        this.__addContent.purgeDependencyOnElmtId(rmElmtId);
+    }
+    aboutToBeDeleted() {
+        this.__NameEdit.aboutToBeDeleted();
+        this.__DescribeEdit.aboutToBeDeleted();
+        this.__showEditDialog.aboutToBeDeleted();
+        this.__isAddDialogShow.aboutToBeDeleted();
+        this.__memoList.aboutToBeDeleted();
+        this.__order.aboutToBeDeleted();
+        this.__keywords.aboutToBeDeleted();
+        this.__currentId.aboutToBeDeleted();
+        this.__addContent.aboutToBeDeleted();
+        SubscriberManager.Get().delete(this.id__());
+        this.aboutToBeDeletedInternal();
+    }
+    get NameEdit() {
+        return this.__NameEdit.get();
+    }
+    set NameEdit(newValue) {
+        this.__NameEdit.set(newValue);
+    }
+    get DescribeEdit() {
+        return this.__DescribeEdit.get();
+    }
+    set DescribeEdit(newValue) {
+        this.__DescribeEdit.set(newValue);
+    }
+    get showEditDialog() {
+        return this.__showEditDialog.get();
+    }
+    set showEditDialog(newValue) {
+        this.__showEditDialog.set(newValue);
+    }
+    get isAddDialogShow() {
+        return this.__isAddDialogShow.get();
+    }
+    set isAddDialogShow(newValue) {
+        this.__isAddDialogShow.set(newValue);
+    }
+    get memoList() {
+        return this.__memoList.get();
+    }
+    set memoList(newValue) {
+        this.__memoList.set(newValue);
+    }
+    get order() {
+        return this.__order.get();
+    }
+    set order(newValue) {
+        this.__order.set(newValue);
+    }
+    get keywords() {
+        return this.__keywords.get();
+    }
+    set keywords(newValue) {
+        this.__keywords.set(newValue);
+    }
+    get currentId() {
+        return this.__currentId.get();
+    }
+    set currentId(newValue) {
+        this.__currentId.set(newValue);
+    }
+    onKeywordsChange() {
+        if (this.keywords.length == 0) {
+            this.memoList = this.originDevice;
+            this.onOrderChange();
+        }
+        else {
+            let resultList = [];
+            for (const DeviceItem of this.originDevice) {
+                if (DeviceItem.name.includes(this.keywords)) {
+                    resultList.push(DeviceItem);
+                }
+            }
+            this.memoList = resultList;
+        }
+    }
+    get addContent() {
+        return this.__addContent.get();
+    }
+    set addContent(newValue) {
+        this.__addContent.set(newValue);
+    }
+    // é¡µé¢åˆå§‹åŒ–å‰å‘é¡µé¢åŠ è½½æ•°æ®
+    aboutToAppear() {
+        this.originDevice = [];
+        this.memoList = [];
+        this.order = false;
+        this.keywords = '';
+        this.showEditDialog = false;
+        this.isAddDialogShow = false;
+        this.addContent = '';
+        this.editingMemoIndex = -1;
+        this.NameEdit = '';
+        this.DescribeEdit = '';
+        // ç¡®ä¿æ•°æ®åº“è¿žæŽ¥æ­£ç¡®åˆå§‹åŒ–
+        this.MemoTable.getRdbStore(() => {
+            Logger.info('Home', 'Database connection established');
+            this.loadData();
+        });
+    }
+    // åŠ è½½æ•°æ®çš„æ–¹æ³•
+    loadData() {
+        this.MemoTable.query((result) => {
+            Logger.info('Home', `Loaded ${result.length} devices from database`);
+            this.originDevice = result;
+            this.memoList = this.originDevice;
+        });
+    }
+    // åœ¨ç»„ä»¶é”€æ¯æ—¶ç¡®ä¿æ­£ç¡®å…³é—­æ•°æ®åº“è¿žæŽ¥
+    aboutToDisappear() {
+        // ç¡®ä¿æ‰€æœ‰æŒ‚èµ·çš„æ“ä½œéƒ½å·²å®Œæˆ
+        setTimeout(() => {
+            if (this.MemoTable) {
+                this.MemoTable.deviceDateTable.closeRdbStore();
+                Logger.info('Home', 'Database connection closed');
+            }
+        }, 500);
+    }
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Home.ets(229:5)", "entry");
+            Column.width('100%');
+            Column.height('100%');
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.debugLine("entry/src/main/ets/view/Home.ets(230:7)", "entry");
+            Row.justifyContent(FlexAlign.SpaceBetween);
+            Row.width('100%');
+            Row.margin({ top: '48vp', bottom: '12vp' });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('é©±é¸Ÿè£…ç½®');
+            Text.debugLine("entry/src/main/ets/view/Home.ets(232:9)", "entry");
+            Text.fontWeight(700);
+            Text.fontSize('26fp');
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777426, "type": 20000, params: [], "bundleName": "com.example.pageanddata", "moduleName": "entry" });
+            Image.debugLine("entry/src/main/ets/view/Home.ets(237:9)", "entry");
+            Image.width('30vp');
+            Image.height('30vp');
+            Image.onClick(() => {
+                this.isAddDialogShow = true; // ç‚¹å‡»æ—¶æ˜¾ç¤ºå¼¹çª—
+                this.NameEdit = ''; // é‡ç½®è®¾å¤‡åç§°è¾“å…¥æ¡†
+                this.DescribeEdit = '';
+            });
+        }, Image);
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            If.create();
+            // æ ¹æ®çŠ¶æ€å˜é‡å†³å®šæ˜¯å¦æ˜¾ç¤ºEditDialog
+            if (this.showEditDialog) {
+                this.ifElseBranchUpdateFunction(0, () => {
+                    {
+                        this.observeComponentCreation2((elmtId, isInitialRender) => {
+                            if (isInitialRender) {
+                                let componentCall = new EditDialog(this, {
+                                    NameEdit: this.__NameEdit,
+                                    DescribeEdit: this.__DescribeEdit,
+                                    onClose: this.closeDialog,
+                                    onSave: this.saveMemo
+                                }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/view/Home.ets", line: 251, col: 9 });
+                                ViewPU.create(componentCall);
+                                let paramsLambda = () => {
+                                    return {
+                                        NameEdit: this.NameEdit,
+                                        DescribeEdit: this.DescribeEdit,
+                                        onClose: this.closeDialog,
+                                        onSave: this.saveMemo
+                                    };
+                                };
+                                componentCall.paramsGenerator_ = paramsLambda;
+                            }
+                            else {
+                                this.updateStateVarsOfChildByElmtId(elmtId, {});
+                            }
+                        }, { name: "EditDialog" });
+                    }
+                });
+            }
+            else {
+                this.ifElseBranchUpdateFunction(1, () => {
+                });
+            }
+        }, If);
+        If.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            If.create();
+            if (this.isAddDialogShow) {
+                this.ifElseBranchUpdateFunction(0, () => {
+                    {
+                        this.observeComponentCreation2((elmtId, isInitialRender) => {
+                            if (isInitialRender) {
+                                let componentCall = new AddDialog(this, {
+                                    NameEdit: this.__NameEdit,
+                                    DescribeEdit: this.__DescribeEdit,
+                                    onClose: this.closeDialog,
+                                    onCreate: this.createMemo
+                                }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/view/Home.ets", line: 259, col: 9 });
+                                ViewPU.create(componentCall);
+                                let paramsLambda = () => {
+                                    return {
+                                        NameEdit: this.NameEdit,
+                                        DescribeEdit: this.DescribeEdit,
+                                        onClose: this.closeDialog,
+                                        onCreate: this.createMemo
+                                    };
+                                };
+                                componentCall.paramsGenerator_ = paramsLambda;
+                            }
+                            else {
+                                this.updateStateVarsOfChildByElmtId(elmtId, {});
+                            }
+                        }, { name: "AddDialog" });
+                    }
+                });
+            }
+            else {
+                this.ifElseBranchUpdateFunction(1, () => {
+                });
+            }
+        }, If);
+        If.pop();
+        {
+            this.observeComponentCreation2((elmtId, isInitialRender) => {
+                if (isInitialRender) {
+                    let componentCall = new DeviceSearch(this, { keywords: this.__keywords, cleanKeywords: this.cleanKeywords }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/view/Home.ets", line: 266, col: 7 });
+                    ViewPU.create(componentCall);
+                    let paramsLambda = () => {
+                        return {
+                            keywords: this.keywords,
+                            cleanKeywords: this.cleanKeywords
+                        };
+                    };
+                    componentCall.paramsGenerator_ = paramsLambda;
+                }
+                else {
+                    this.updateStateVarsOfChildByElmtId(elmtId, {});
+                }
+            }, { name: "DeviceSearch" });
+        }
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Scroll.create();
+            Scroll.debugLine("entry/src/main/ets/view/Home.ets(268:7)", "entry");
+        }, Scroll);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Home.ets(269:9)", "entry");
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            ForEach.create();
+            const forEachItemGenFunction = (_item, index) => {
+                const memo = _item;
+                {
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        if (isInitialRender) {
+                            let componentCall = new DeviceItem(this, {
+                                memo: memo,
+                                index: index,
+                                onDelete: (idx) => this.deleteMemo(idx),
+                                editCallback: (idx) => this.openEditDialog(idx)
+                            }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/view/Home.ets", line: 273, col: 15 });
+                            ViewPU.create(componentCall);
+                            let paramsLambda = () => {
+                                return {
+                                    memo: memo,
+                                    index: index,
+                                    onDelete: (idx) => this.deleteMemo(idx),
+                                    editCallback: (idx) => this.openEditDialog(idx)
+                                };
+                            };
+                            componentCall.paramsGenerator_ = paramsLambda;
+                        }
+                        else {
+                            this.updateStateVarsOfChildByElmtId(elmtId, {
+                                memo: memo
+                            });
+                        }
+                    }, { name: "DeviceItem" });
+                }
+            };
+            this.forEachUpdateFunction(elmtId, this.memoList, forEachItemGenFunction, (memo) => {
+                return memo.name;
+            }, true, false);
+        }, ForEach);
+        ForEach.pop();
+        Column.pop();
+        Scroll.pop();
+        Column.pop();
+    }
+    onOrderChange() {
+        let orderList = [];
+        orderList = this.memoList.sort((a, b) => {
+            if (this.order) {
+                return a.id - b.id;
+            }
+            else {
+                return b.id - a.id;
+            }
+        });
+        this.memoList = orderList;
+    }
+    rerender() {
+        this.updateDirtyElements();
+    }
+    static getEntryName() {
+        return "Home";
+    }
+}
+registerNamedRoute(() => new Home(undefined, {}), "", { bundleName: "com.example.pageanddata", moduleName: "entry", pagePath: "view/Home", pageFullPath: "entry/src/main/ets/view/Home", integratedHsp: "false", moduleType: "followWithHap" });
+//# sourceMappingURL=Home.js.mapÂ˜ÙTD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\EditDialog.etsÙSD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\AddDialog.etsÙVD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\DeviceSearch.etsÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceData.etsÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceItem.etsÙV hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_kits_@kit.ArkUI.d.tsÙ^D:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\MemoTable.etsÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsÙND:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\Home.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath¬shouldEmitJs¯hostModulesInfo¥entryÃÂÙ3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÙ-D:\APPkf\huawei_app\PageAndData02\02_Complete¥entry¥1.0.0Ô  Ù3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÃ‘ÔrC’²hostDependencyName®hostModuleName¬../view/Home¥entryÃÚ nimport {EditDialog} from './EditDialog'
+import {AddDialog} from './AddDialog'
+import DeviceSearch from './DeviceSearch'
+import DeviceDate from '../viewmodel/DeviceData'
+import DeviceItem from '../viewmodel/DeviceItem'
+import { router } from '@kit.ArkUI';
+import { BusinessError } from '@kit.BasicServicesKit';
+import MemoTable from 'ets/common/database/MemoTable'
+import Logger from 'ets/utils/Logger';
+
+
+@Entry
+@Component
+export default struct Home {
+
+
+  @State NameEdit: string = '';
+  @State DescribeEdit: string = '';
+  @State showEditDialog: boolean = false; // æ–°å¢žçŠ¶æ€å˜é‡æŽ§åˆ¶å¼¹çª—æ˜¾ç¤º
+  @State isAddDialogShow: boolean = false
+  @State memoList:DeviceDate[]=[
+
+  ]
+  originDevice:DeviceDate[]=[]
+  @State @Watch('onOrderChange') order:boolean=true
+  @State @Watch('onKeywordsChange') keywords:string=''
+  editingMemoIndex: number = -1
+  @State currentId: number = -1;
+
+
+
+
+
+  onKeywordsChange(){
+    if(this.keywords.length==0){
+      this.memoList=this.originDevice
+      this.onOrderChange()
+    }else{
+      let resultList:DeviceDate[]=[]
+      for(const DeviceItem of this.originDevice){
+        if(DeviceItem.name.includes(this.keywords)){
+          resultList.push(DeviceItem)
+        }
+      }
+      this.memoList=resultList
+    }
+  }
+
+  cleanKeywords=()=>{
+    this.keywords=''
+  }
+
+  private MemoTable = new MemoTable(() => {
+  })
+
+  createMemo=()=>{
+
+    const newMemo: DeviceDate = new DeviceDate(0, this.NameEdit, this.DescribeEdit);
+    this.MemoTable.insertData(newMemo, (id: number) => {
+      newMemo.id = id
+      this.originDevice.push(newMemo)
+      this.memoList=this.originDevice
+    })
+    this.closeDialog()
+
+
+  }
+  clickMemo = (memo: DeviceDate) => {
+    router.pushUrl({
+      url: 'view/Page',
+      params: { id: memo.id }
+    });
+  }
+
+  deleteMemo = (index: number) => {
+    if (index!== -1) {
+      this.MemoTable.deleteData(this.originDevice[index], () => {
+        this.originDevice.splice(index, 1);
+        this.memoList = this.originDevice;
+        this.closeDialog();
+      });
+    }
+  }
+  editMemo = () => {
+    if (this.editingMemoIndex >= 0 && this.editingMemoIndex < this.memoList.length) {
+      // èŽ·å–å½“å‰æ­£åœ¨ç¼–è¾‘çš„è®¾å¤‡
+      const currentDevice = this.memoList[this.editingMemoIndex];
+      
+      // åˆ›å»ºä¸€ä¸ªæ–°çš„è®¾å¤‡å¯¹è±¡ï¼Œä¿ç•™æ‰€æœ‰åŽŸå§‹å±žæ€§ï¼Œåªæ›´æ–°åç§°å’Œæè¿°
+      const updatedDevice = new DeviceDate(
+        currentDevice.id,
+        this.NameEdit,
+        this.DescribeEdit,
+        currentDevice.status,
+        currentDevice.Color,
+        currentDevice.intervalTime,
+        currentDevice.positionX,
+        currentDevice.positionY
+      );
+      
+      // æ›´æ–°è®¾å¤‡æ•°æ®
+      this.MemoTable.updateData(updatedDevice, (result: boolean) => {
+        if (result) {
+          // é‡æ–°åŠ è½½æ•°æ®
+          this.loadData();
+        }
+        this.closeDialog();
+      });
+    }
+  }
+  // æ‰“å¼€ç¼–è¾‘å¯¹è¯æ¡†
+  openEditDialog = (index: number) => {
+    this.editingMemoIndex = index;
+    if (index >= 0 && index < this.memoList.length) {
+      const device = this.memoList[index];
+      this.NameEdit = device.name;
+      this.DescribeEdit = device.description;
+      
+      // è®°å½•å½“å‰ç¼–è¾‘çš„è®¾å¤‡çš„å®Œæ•´ä¿¡æ¯
+      Logger.info('Home', `Opening edit dialog for device: ${JSON.stringify(device)}`);
+    }
+    this.showEditDialog = true;
+  }
+  // ä¿®æ”¹ç¬”è®°çš„æ–¹æ³•
+  saveMemo = () => {
+    if (this.editingMemoIndex!== -1) {
+      const memo = this.originDevice[this.editingMemoIndex];
+      
+      // åˆ›å»ºä¸€ä¸ªæ–°çš„è®¾å¤‡å¯¹è±¡ï¼Œä¿ç•™æ‰€æœ‰åŽŸå§‹å±žæ€§ï¼Œåªæ›´æ–°åç§°å’Œæè¿°
+      const updatedMemo = new DeviceDate(
+        memo.id,
+        this.NameEdit,
+        this.DescribeEdit,
+        memo.status,
+        memo.Color,
+        memo.intervalTime,
+        memo.positionX,
+        memo.positionY
+      );
+      
+      this.MemoTable.updateData(updatedMemo, (result: boolean) => {
+        if (result) {
+          // é‡æ–°åŠ è½½æ•°æ®
+          this.loadData();
+        }
+        this.closeDialog();
+      });
+    }
+  }
+  @State addContent: string = ''
+  // å…³é—­å¼¹çª—çš„æ–¹æ³•
+  closeDialog = () => {
+    this.showEditDialog = false
+    this.addContent = ''
+    this.isAddDialogShow = false
+    this.NameEdit = ''
+    this.DescribeEdit = ''
+    this.editingMemoIndex = -1
+  }
+
+  // é¡µé¢åˆå§‹åŒ–å‰å‘é¡µé¢åŠ è½½æ•°æ®
+  aboutToAppear() {
+    this.originDevice = []
+    this.memoList = []
+    this.order = false
+    this.keywords = ''
+    this.showEditDialog = false
+    this.isAddDialogShow = false
+    this.addContent = ''
+    this.editingMemoIndex = -1
+    this.NameEdit = ''
+    this.DescribeEdit = ''
+
+    // ç¡®ä¿æ•°æ®åº“è¿žæŽ¥æ­£ç¡®åˆå§‹åŒ–
+    this.MemoTable.getRdbStore(() => {
+      Logger.info('Home', 'Database connection established');
+      this.loadData();
+    })
+  }
+
+  // åŠ è½½æ•°æ®çš„æ–¹æ³•
+  loadData() {
+    this.MemoTable.query((result: DeviceDate[]) => {
+      Logger.info('Home', `Loaded ${result.length} devices from database`);
+      
+      this.originDevice = result;
+      this.memoList = this.originDevice;
+    })
+  }
+
+  // æ·»åŠ ç¬”è®°çš„æ–¹æ³•
+  addMemo = () => {
+    if (this.NameEdit.length > 0) {
+      let maxId = 0;
+      // æ‰¾å‡ºå½“å‰æœ€å¤§ID
+      if (this.originDevice.length > 0) {
+        this.originDevice.forEach(device => {
+          if (device.id > maxId) {
+            maxId = device.id;
+          }
+        });
+      }
+      
+      // åˆ›å»ºæ–°è®¾å¤‡ï¼Œç¡®ä¿IDå”¯ä¸€
+      const newMemo = new DeviceDate(maxId + 1, this.NameEdit, this.DescribeEdit);
+      
+      this.MemoTable.insertData(newMemo, (result: number | boolean) => {
+        if (result) {
+          // é‡æ–°åŠ è½½æ•°æ®
+          this.loadData();
+        }
+        this.closeDialog();
+      });
+    }
+  }
+
+  // åœ¨ç»„ä»¶é”€æ¯æ—¶ç¡®ä¿æ­£ç¡®å…³é—­æ•°æ®åº“è¿žæŽ¥
+  aboutToDisappear() {
+    // ç¡®ä¿æ‰€æœ‰æŒ‚èµ·çš„æ“ä½œéƒ½å·²å®Œæˆ
+    setTimeout(() => {
+      if (this.MemoTable) {
+        this.MemoTable.deviceDateTable.closeRdbStore();
+        Logger.info('Home', 'Database connection closed');
+      }
+    }, 500);
+  }
+
+  build() {
+    Column() {
+      Row() {
+
+        Text('é©±é¸Ÿè£…ç½®')
+          .fontWeight(700)
+          .fontSize('26fp');
+
+
+        Image($r("app.media.add"))
+          .width('30vp')
+          .height('30vp')
+          .onClick(() => {
+            this.isAddDialogShow = true; // ç‚¹å‡»æ—¶æ˜¾ç¤ºå¼¹çª—
+            this.NameEdit = ''; // é‡ç½®è®¾å¤‡åç§°è¾“å…¥æ¡†
+            this.DescribeEdit = '';
+          });
+      }
+      .justifyContent(FlexAlign.SpaceBetween)
+      .width('100%')
+      .margin({ top: '48vp', bottom: '12vp' });
+      // æ ¹æ®çŠ¶æ€å˜é‡å†³å®šæ˜¯å¦æ˜¾ç¤ºEditDialog
+      if (this.showEditDialog) {
+        EditDialog({
+          NameEdit: this.NameEdit,
+          DescribeEdit: this.DescribeEdit,
+          onClose: this.closeDialog,
+          onSave: this.saveMemo
+        });
+      }
+      if (this.isAddDialogShow) {
+        AddDialog({
+          NameEdit: this.NameEdit,
+          DescribeEdit: this.DescribeEdit,
+          onClose: this.closeDialog,
+          onCreate: this.createMemo
+        });
+      }
+      DeviceSearch({keywords:$keywords,cleanKeywords:this.cleanKeywords})
+
+      Scroll(){
+        Column(){
+          ForEach(
+            this.memoList,
+            (memo: DeviceDate, index: number) => {
+              DeviceItem({
+                memo: memo,
+                index: index, // ä¼ é€’index
+                onDelete: (idx): void => this.deleteMemo(idx),
+                editCallback: (idx): void => this.openEditDialog(idx)
+              });
+            },
+            (memo: DeviceDate) => {
+              return memo.name;
+            }
+          )
+        }
+      }
+
+
+    }
+    .width('100%')
+    .height('100%');
+  }
+
+
+  onOrderChange() {
+    let orderList:DeviceDate[]=[]
+    orderList=this.memoList.sort((a,b)=>{
+      if(this.order){
+        return a.id-b.id
+      }else{
+        return b.id-a.id
+      }
+    })
+    this.memoList=orderList
+  }
+}ÀÔrD˜ª@kit.ArkUI¬./EditDialog®./DeviceSearch·../viewmodel/DeviceData·../viewmodel/DeviceItem½ets/common/database/MemoTable«./AddDialog°ets/utils/LoggerÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙV hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_kits_@kit.ArkUI.d.tsAÃªoh-resolveÂEAÂÙTD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\EditDialog.etsAÃªoh-resolveÂEAÂÙVD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\DeviceSearch.etsAÃªoh-resolveÂEAÂÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceData.etsAÃªoh-resolveÂEAÂÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceItem.etsAÃªoh-resolveÂEAÂÙ^D:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\MemoTable.etsAÃªoh-resolveÂEAÂÙSD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\AddDialog.etsAÃªoh-resolveÂEAÂÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂ“ÔrF–§version¤fileªsourceRoot§sources¥names¨mappings§Home.js ‘¨Home.etsÜ˜”    ”  ”	  ”  ”  ”  ”)  '”*  '˜”   ” ”	 ” ” ” ”' %”( %–”   ” ” ” ”) )”* )–”   ” ” ” ”0 0”1 0–”   ” ” ” ”0 0”1 0˜”   ” ”	 	” ” ” ”# #”$ $–”   ” ” ” ”5 5”6 5–”   ” ” ” ”% %”& &–”   ” ” ” ” ” ‘”  ’”7 ”9 ’”;  ”= "’”= #”ÌB (’”> $”ÌC )’”7 ”9 ’” ” ’”4 /”8 3’”7 4”9 6“”  ”! ”" “”8 ”9 ”: “” 0”  0”" 0—” 1” 1” 1	” 1” 1” 1” 1’” 2”	 2–” 4” 4”& 4#”' 4$”* 4'”, 4)“” 5”	 5”
+ 5“” 7” 7” 7Ü ” 9” 9
+” 9” 9 ”  9$”* 9.”+ 9/”, 90”. 92”2 96”3 97”; 9?”= 9ÌA”ÌA 9ÌE”ÌB 9ÌF”ÌN 9ÌR”ÌO 9ÌS”ÌP 9ÌT” :” :” :	” :” :”% :”& :”- :%”/ :'”0 :(”2 :2”4 :4”6 :6—” ;” ;” ;” ;” ;” ;”  ;š” <” <
+” <”! <”" <”& <”' <”. <$”/ <%”0 <%™” =” =
+” =” =”  =”$ =”% =”1 =%”2 =%”” >” >” >” >–” ?” ?” ?	” ?” ?” ?’” ÌB”	 ÌB•” ÌC” ÌC” ÌC”  ÌC!”" ÌC#•” ÌD” ÌD
+” ÌD” ÌD” ÌD”” ÌE” ÌE	” ÌE”  ÌEš” ÌF” ÌF” ÌF” ÌF” ÌF” ÌF”" ÌF”# ÌF”% ÌF”' ÌF“” ÌG” ÌG” ÌG’” ÌH”	 ÌH•” ÌJ” ÌJ”  ÌJ”" ÌJ”$ ÌJ!—” ÌK” ÌK” ÌK” ÌK” ÌK” ÌK” ÌKÜ ” ÌL” ÌL
+” ÌL” ÌL” ÌL”) ÌL”* ÌL ”. ÌL$”/ ÌL%”; ÌL1”< ÌL2”ÌA ÌL7”ÌB ÌL8”ÌD ÌL:”ÌG ÌL=”ÌI ÌL?œ” ÌM” ÌM” ÌM”% ÌM”& ÌM”, ÌM ”- ÌM!”2 ÌM&”4 ÌM(”5 ÌM)”6 ÌM*”7 ÌM+™” ÌN” ÌN” ÌN”! ÌN”$ ÌN”( ÌN”) ÌN”5 ÌN)”6 ÌN*–” ÌO” ÌO” ÌO”$ ÌO”& ÌO”' ÌO”” ÌP” ÌP” ÌP” ÌP	‘” ÌQ’” ÌR”	 ÌR“” ÌS” ÌS” ÌSÜ ” ÌT” ÌT” ÌT” ÌT”% ÌT”) ÌT!”* ÌT"”. ÌT&”2 ÌT*”3 ÌT+”ÌC ÌT;”ÌF ÌT>”ÌJ ÌTÌB”ÌK ÌTÌC”ÌS ÌTÌK”ÌT ÌTÌL”ÌZ ÌTÌR”Ì\ ÌTÌT’” ÌU” ÌU” ÌV” ÌV”# ÌV”& ÌV”* ÌV ”+ ÌV!”3 ÌV)”4 ÌV*”8 ÌV.”9 ÌV/”ÌI ÌV?”ÌJ ÌVÌ@”ÌK ÌVÌA’” ÌX”/ ÌX%Ü (” ÌY” ÌY”# ÌY”& ÌY”* ÌY ”4 ÌY*”5 ÌZ”ÌB ÌZ”ÌC ÌZ”ÌE ÌZ”ÌG Ì[”ÌK Ì[”ÌL Ì[”ÌT Ì[”ÌV Ì\”ÌZ Ì\”Ì[ Ì\”Ìg Ì\”Ìi Ì]”Ìv Ì]”Ìw Ì]”Ì} Ì]”Ì Ì^”ÌŒ Ì^”Ì Ì^”Ì’ Ì^”Ì” Ì_”Ì¡ Ì_”Ì¢ Ì_”Ì® Ì_"”Ì° Ì`”Ì½ Ì`”Ì¾ Ì`”ÌÇ Ì`”ÌÉ Ìa”ÌÖ Ìa”Ì× Ìa”Ìà Ìa”Ìá Ìb”Ìâ Ìb’” Ìd” Ìd” Ìe” Ìe
+” Ìe” Ìe” Ìe”) Ìe”* Ìe ”7 Ìe-”9 Ìe/”: Ìe0”Ì@ Ìe?”ÌB ÌeÌA”ÌD ÌeÌC”” Ìf” Ìf” Ìf”  Ìf’” Ìg
+”! Ìg–” Ìh
+” Ìh” Ìh”% Ìh”' Ìh”( Ìh‘” Ìi	–” Ìj” Ìj” Ìj”$ Ìj”& Ìj”' Ìj”” Ìk” Ìk” Ìk” Ìk	‘” Ìl’” Ìm”	 Ìm•” Ìo” Ìo”$ Ìo!”& Ìo#”( Ìo%—” Ìp” Ìp” Ìp	”! Ìp”$ Ìp”) Ìp!”* Ìp"ž” Ìq” Ìq” Ìq” Ìq” Ìq” Ìq”# Ìq”& Ìq”* Ìq"”+ Ìq#”3 Ìq+”4 Ìq,”: Ìq2”< Ìq4›” Ìr” Ìr” Ìr” Ìr”# Ìr”$ Ìr”, Ìr"”- Ìr#”2 Ìr(”3 Ìr)”4 Ìr*™” Ìs” Ìs
+” Ìs” Ìs”  Ìs”& Ìs”' Ìs”+ Ìs!”, Ìs"™” Ìt” Ìt
+” Ìt”! Ìt”$ Ìt”* Ìt ”+ Ìt!”6 Ìt,”7 Ìt-’” Ìv”! ÌvÜ ” Ìw” Ìw” Ìw” Ìw” Ìw”" Ìw”$ Ìw”ÌG Ìw=”ÌK ÌwÌA”ÌL ÌwÌB”ÌU ÌwÌK”ÌV ÌwÌL”Ì\ ÌwÌR”Ì] ÌwÌS”Ì_ ÌwÌU”Ì` ÌwÌV”Ìa ÌwÌW‘” Ìx—” Ìy” Ìy” Ìy	” Ìy”" Ìy”& Ìy”' Ìy’” Ìz”	 Ìz“” Ì|” Ì|” Ì|™” Ì}” Ì}” Ì}” Ì}”% Ì}”* Ì}!”+ Ì}"”, Ì}#”. Ì}%” Ì~” Ì~” Ì~” Ì~”! Ì~”" Ì~”. Ì~$”/ Ì~%”3 Ì~)”4 Ì~*”ÌD Ì~:”ÌE Ì~;”ÌF Ì~<’” Ì€”/ Ì€%Ü (” Ì” Ì”! Ì”$ Ì”( Ì”2 Ì(”3 Ì‚”7 Ì‚”8 Ì‚”: Ì‚”< Ìƒ”Ì@ Ìƒ”ÌA Ìƒ”ÌI Ìƒ”ÌK Ì„”ÌO Ì„”ÌP Ì„”Ì\ Ì„”Ì^ Ì…”Ìb Ì…”Ìc Ì…”Ìi Ì…”Ìk Ì†”Ìo Ì†”Ìp Ì†”Ìu Ì†”Ìw Ì‡”Ì{ Ì‡”Ì| Ì‡”Ìˆ Ì‡”ÌŠ Ìˆ”ÌŽ Ìˆ”Ì Ìˆ”Ì˜ Ìˆ”Ìš Ì‰”Ìž Ì‰”ÌŸ Ì‰”Ì¨ Ì‰”Ì© ÌŠ”Ìª ÌŠ” ÌŒ” ÌŒ
+” ÌŒ” ÌŒ” ÌŒ”) ÌŒ”* ÌŒ ”5 ÌŒ+”7 ÌŒ-”8 ÌŒ.”> ÌŒ=”Ì@ ÌŒ?”ÌB ÌŒÌA”” Ì” Ì” Ì”  Ì’” ÌŽ
+”! ÌŽ–” Ì
+” Ì” Ì”% Ì”' Ì”( Ì‘” Ì	–” Ì‘” Ì‘” Ì‘”$ Ì‘”& Ì‘”' Ì‘”” Ì’” Ì’” Ì’” Ì’	‘” Ì“’” Ì””	 Ì”’”9 Ì•”; Ì• ’” Ì–” Ì–“” Ì—” Ì—”  Ì——” Ì˜” Ì˜” Ì˜	” Ì˜”" Ì˜”' Ì˜”( Ì˜—” Ì™” Ì™” Ì™	” Ì™” Ì™”  Ì™”! Ì™—” Ìš” Ìš” Ìš	”  Ìš”# Ìš”( Ìš ”) Ìš —” Ì›” Ì›” Ì›	” Ì›” Ì›” Ì›” Ì›—” Ìœ” Ìœ” Ìœ	” Ìœ”  Ìœ”" Ìœ”# Ìœ˜” Ì” Ì” Ì	”! Ì”$ Ì”% Ì”& Ì”' Ì’” Ìž”	 Ìž“” Ì¿” Ì¿” Ì¿š” ÌÀ” ÌÀ” ÌÀ” ÌÀ” ÌÀ” ÌÀ”$ ÌÀ”' ÌÀ”( ÌÀ ”* ÌÀ"–” ÌÁ” ÌÁ
+” ÌÁ” ÌÁ” ÌÁ” ÌÁ’” ÌÂ” ÌÂš” ÌÃ” ÌÃ
+” ÌÃ” ÌÃ”% ÌÃ”& ÌÃ”, ÌÃ"”/ ÌÃ%”0 ÌÃ&”2 ÌÃ(š” ÌÄ” ÌÄ” ÌÄ”% ÌÄ”& ÌÄ”- ÌÄ!”. ÌÄ"”4 ÌÄ(”5 ÌÄ)”7 ÌÄ+˜” ÌÅ
+” ÌÅ”" ÌÅ”# ÌÅ”% ÌÅ”( ÌÅ”- ÌÅ”/ ÌÅ!—” ÌÆ”! ÌÆ”$ ÌÆ”* ÌÆ”+ ÌÆ”- ÌÆ”. ÌÆ‘” ÌÇ”” ÌÈ” ÌÈ	” ÌÈ
+” ÌÈ‘” ÌÉ’” ÌË” ÌËÜ ” ÌÌ” ÌÌ” ÌÌ”  ÌÌ”$ ÌÌ”. ÌÌ$”/ ÌÌ%”4 ÌÌ*”7 ÌÌ-”8 ÌÌ.”: ÌÌ0”> ÌÌ4”? ÌÌ5”ÌG ÌÌ=”ÌI ÌÌ?”ÌM ÌÌÌC”ÌN ÌÌÌD”ÌZ ÌÌÌP”Ì[ ÌÌÌQ”Ì\ ÌÌÌR” ÌÎ” ÌÎ
+” ÌÎ” ÌÎ” ÌÎ”) ÌÎ”* ÌÎ ”1 ÌÎ'”3 ÌÎ)”4 ÌÎ*”: ÌÎÌB”< ÌÎÌD”> ÌÎÌF”” ÌÏ” ÌÏ” ÌÏ”  ÌÏ’” ÌÐ
+”! ÌÐ–” ÌÑ
+” ÌÑ” ÌÑ”% ÌÑ”' ÌÑ”( ÌÑ‘” ÌÒ	–” ÌÓ” ÌÓ” ÌÓ”$ ÌÓ”& ÌÓ”' ÌÓ”” ÌÔ” ÌÔ” ÌÔ” ÌÔ	‘” ÌÕ’” ÌÖ”	 ÌÖ‘” &’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” !” &’” !” &’” $” ,’” $” ,’” 	” ’” 	” ’” !” !š” "” "” "” "” "” "”  "”$ "”% "”' "™” #” #
+” #” #” #”  #”! #”- #%”. #%–” $” $
+” $” $”  $”! $‘”	 %‘” %	–” &” &
+” &” &"” &$”  &$™” '” '
+” '”! '”% '”) '"”* '#”6 '/”8 '0” (” (” (” (”# (”$ (”, (#”- ($”1 ((”2 ()”: (1”; (2”= (3˜” )
+” )” )”# )”$ )”. )$”/ )%”0 )%‘” *	‘” +—” ,” ,
+” ,” ,” ,”& ,”' ,‘”	 -’” .” .’” Ì•	” Ì•’” Ì•	” Ì•’” Ì ” Ì ’” Ì¡” Ì¡—” Ì¢” Ì¢” Ì¢	” Ì¢” Ì¢” Ì¢” Ì¢—” Ì£” Ì£” Ì£	” Ì£” Ì£” Ì£” Ì£—” Ì¤” Ì¤” Ì¤	” Ì¤” Ì¤” Ì¤” Ì¤—” Ì¥” Ì¥” Ì¥	” Ì¥” Ì¥” Ì¥” Ì¥—” Ì¦” Ì¦” Ì¦	” Ì¦” Ì¦”# Ì¦”$ Ì¦—” Ì§” Ì§” Ì§	” Ì§” Ì§”$ Ì§ ”% Ì§ —” Ì¨” Ì¨” Ì¨	” Ì¨” Ì¨” Ì¨” Ì¨˜” Ì©” Ì©” Ì©	” Ì©”  Ì©”! Ì©”" Ì©”# Ì©—” Ìª” Ìª” Ìª	” Ìª” Ìª” Ìª” Ìª—” Ì«” Ì«” Ì«	” Ì«” Ì«” Ì«” Ì«’” Ì­” Ì­™” Ì®” Ì®” Ì®	” Ì®” Ì®”" Ì®”# Ì®”& Ì®"”( Ì®$š” Ì¯” Ì¯” Ì¯” Ì¯” Ì¯” Ì¯”  Ì¯”ÌA Ì¯;”ÌB Ì¯<”ÌC Ì¯=–” Ì°” Ì°
+” Ì°” Ì°” Ì°” Ì°”” Ì±”	 Ì±”
+ Ì±” Ì±’” Ì²” Ì²’” Ì´” Ì´’” Ìµ” Ìµ
+›” Ì¶” Ì¶” Ì¶	” Ì¶” Ì¶” Ì¶” Ì¶” Ì¶”$ Ì¶.”& Ì¶0”( Ì¶2ž” Ì·” Ì·” Ì·” Ì·” Ì·” Ì·”  Ì·”* Ì·$”0 Ì·*”1 Ì·+”7 Ì·1”ÌO Ì·ÌI”ÌP Ì·ÌJ”ÌQ Ì·ÌK—” Ì¹” Ì¹
+” Ì¹” Ì¹”  Ì¹”& Ì¹ ”' Ì¹!™” Ìº” Ìº
+” Ìº” Ìº” Ìº”  Ìº”! Ìº”- Ìº'”. Ìº(”” Ì»”	 Ì»”
+ Ì»” Ì»’” Ì¼” Ì¼’” ÌØ” ÌØ’” ÌÙ” ÌÙ’” ÌÚ” ÌÚ•” ÌÛ” ÌÛ” ÌÛ” ÌÛ” ÌÛ–” ÌÜ” ÌÜ
+” ÌÜ” ÌÜ” ÌÜ”  ÌÜš” ÌÝ” ÌÝ” ÌÝ” ÌÝ” ÌÝ”. ÌÝ&”/ ÌÝ'”< ÌÝ4”> ÌÝ6”? ÌÝ7š” ÌÞ” ÌÞ” ÌÞ” ÌÞ” ÌÞ”" ÌÞ”$ ÌÞ”Ì@ ÌÞ8”ÌA ÌÞ9”ÌB ÌÞ:‘” Ìß–” Ìà”	 Ìà” Ìà” Ìà
+” Ìà” Ìà’” Ìá” Ìá‘” Ìã’” Ìä” Ìä
+–” Ìä” Ìä
+” Í ” Í 
+” Í ” Í –” Ìä” Ìä
+” Í!” Í!” Í!”  Í!’” Ìå” Ìå	˜” Ìå” Ìå	” Ìõ” Ìõ” Ìõ”( Ìõ”) Ìõ ”5 Ìõ,–” Ìå” Ìå	” Ìö” Ìö” Ìö” Ìöž” Ìå” Ìå	” Ì÷” Ì÷” Ì÷” Ì÷” Ì÷” Ì÷”$ Ì÷”& Ì÷”, Ì÷#”. Ì÷%”4 Ì÷+”6 Ì÷-”” Ìç” Ìç” Ìç” Ìç–” Ìç” Ìç” Ìè” Ìè” Ìè” Ìè–” Ìç” Ìç” Ìé” Ìé” Ìé”  Ìé’” Ìç” Ìç’” Ìì” Ìì–” Ìì” Ìì” Ìí” Ìí” Ìí” Ìí–” Ìì” Ìì” Ìî” Ìî” Ìî” Ìî—” Ìì” Ìì” Ìï” Ìï” Ìï” Ìï” Ìï™” Ìð” Ìð” Ìð”$ Ìð ”' Ìð#”+ Ìð'”, Ìð(”- Ìð)”7 Ìð3™” Ìñ” Ìñ” Ìñ” Ìñ”  Ìñ”" Ìñ”# Ìñ”$ Ìñ ”0 Ìñ,—” Ìò” Ìò” Ìò”! Ìò”$ Ìò ”& Ìò"”' Ìò#’” Ìó
+” Ìó’” Ìå” Ìå	’” Ìø”% Ìø–” Ìù” Ìù
+” Ìù” Ìù”# Ìù”% Ìù“”8 Ìú”ÌB Ìú”ÌI Ìú“”$ Ìû
+”, Ìû”= Ìû!“”$ Ìü
+”0 Ìü”ÌE Ìü)–”$ Ìý
+”+ Ìý”- Ìý”1 Ìý”2 Ìý”= Ìý#–”$ Ìþ
+”* Ìþ”, Ìþ”0 Ìþ”1 Ìþ”9 Ìþ‘”! Ìÿ	’”( Ìû
+”0 Ìû’”( Ìü
+”4 Ìü–”( Ìý
+”/ Ìý”1 Ìý”5 Ìý”6 Ìý”ÌA Ìý#–”( Ìþ
+”. Ìþ”0 Ìþ”4 Ìþ”5 Ìþ”= Ìþ‘” Í ‘” Í –” Í” Í
+” Í” Í”$ Í”& Í “”8 Í”ÌA Í”ÌH Í“”$ Í
+”, Í”= Í!“”$ Í
+”0 Í”ÌE Í)–”$ Í
+”+ Í”- Í”1 Í”2 Í”= Í#–”$ Í
+”, Í”. Í”2 Í”3 Í”= Í#‘”! Í	’”( Í
+”0 Í’”( Í
+”4 Í–”( Í
+”/ Í”1 Í”5 Í”6 Í”ÌA Í#–”( Í
+”0 Í”2 Í”6 Í”7 Í”ÌA Í#‘” Í‘” Í”, Í	”8 Í	”? Í	”ÌA Í	”ÌI Í	”ÌZ Í	&”Ì\ Í	'”Ìi Í	4”Ìk Í	5”Ìo Í	9”Ìp Í	:”Ì} Í	ÌG”Ì Í	ÌH’” Í	”$ Í	–” Í	'”) Í	4”+ Í	5”/ Í	9”0 Í	:”= Í	ÌG’” Í” Í’” Í” Í’” Í
+” Í’”3 Í”8 Í,“”4 Í”> Í”ÌE Í””  Í”$ Í”& Í”* Í””  Í”% Í”' Í”, Íž”  Í”( Í”* Í”+ Í”. Í”0 Í&”2 Í(”3 Í)”7 Í-”8 Í.”ÌB Í8”ÌC Í9”ÌF Í<”ÌG Í=ž”  Í”, Í”. Í”/ Í”2 Í"”4 Í*”6 Í,”7 Í-”; Í1”< Í2”ÌJ ÍÌ@”ÌK ÍÌA”ÌN ÍÌD”ÌO ÍÌE‘” Í””$ Í”( Í”* Í”. Í””$ Í”) Í”+ Í”0 Íž”$ Í”, Í”. Í”/ Í”2 Í”4 Í&”6 Í(”7 Í)”; Í-”< Í.”ÌF Í8”ÌG Í9”ÌJ Í<”ÌK Í=ž”$ Í”0 Í”2 Í”3 Í”6 Í"”8 Í*”: Í,”; Í-”? Í1”Ì@ Í2”ÌN ÍÌ@”ÌO ÍÌA”ÌR ÍÌD”ÌS ÍÌE””  Í”$ Í”& Í”* Í™”/ Í”3 Í”4 Í”< Í”ÌV Í”ÌW Í”Ì[ Í”Ì] Í”Ì_ Í!–” Í” Í” Í” Í”  Í”! Í’” Í” Í’” Í
+” Í’” Í” Í’” Í” Í’” Ìä” Ìä
+‘” Í"’” Í%” Í%–” Í&” Í&” Í&” Í&” Í&!” Í&!Ÿ” Í'” Í'” Í'” Í'” Í'”! Í'”" Í'”& Í' ”' Í'!”( Í'"”) Í'#”+ Í'$”, Í'%”. Í'&”0 Í'(–” Í(” Í(	” Í(” Í(” Í(” Í(š” Í)” Í)” Í)” Í)” Í)” Í)” Í)”  Í)”" Í)”# Í)‘” Í*‘” Í*š” Í+” Í+” Í+” Í+” Í+” Í+” Í+”  Í+”" Í+”# Í+‘” Í,”” Í-”	 Í-”
+ Í-” Í-—” Í.” Í.” Í.	” Í.” Í.”! Í.”" Í.’” Í/” Í/ÔrG–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  ÌŽ ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ìž ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌÐ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  ÌÝ ‘”  ÌÞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìð ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìý ‘”  Ìþ ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  ÍŽ ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Íž ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ‘”  Í¼ ‘”  Í½ ‘”  Í¾ ‘”  Í¿ ‘”  ÍÀ ‘”  ÍÁ ‘”  ÍÂ ‘”  ÍÃ ‘”  ÍÄ ‘”  ÍÅ ‘”  ÍÆ ‘”  ÍÇ ‘”  ÍÈ ‘”  ÍÉ ‘”  ÍÊ ‘”  ÍË ‘”  ÍÌ ‘”  ÍÍ ‘”  ÍÎ ‘”  ÍÏ ‘”  ÍÐ ‘”  ÍÑ ‘”  ÍÒ ‘”  ÍÓ ‘”  ÍÔ ‘”  ÍÕ ‘”  ÍÖ ‘”  Í× ‘”  ÍØ ‘”  ÍÙ ‘”  ÍÚ ‘”  ÍÛ ‘”  ÍÜ ‘”  ÍÝ ‘”  ÍÞ ‘”  Íß ‘”  Íà ‘”  Íá ‘”  Íâ ‘”  Íã ‘”  Íä ‘”  Íå ‘”  Íæ ‘”  Íç ‘”  Íè ‘”  Íé ‘”  Íê ‘”  Íë ‘”  Íì ‘”  Íí ‘”  Íî ‘”  Íï ‘”  Íð ‘”  Íñ ‘”  Íò ‘”  Íó ‘”  Íô ‘”  Íõ ‘”  Íö ‘”  Í÷ ‘”  Íø ‘”  Íù ‘”  Íú ‘”  Íû ‘”  Íü ‘”  Íý ‘”  Íþ ‘”  Íÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ÔrH’§missing¦pluginÃ¦genAbcÂÔ  ÔrI”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache˜ÔrJ•¤type¥start£endªspecifiers¦source±ImportDeclarationÌ€Ìª‘ÔrK•¤type¥start£end¨imported¥local¯ImportSpecifierÌ‰Ì“ÔrL”¤type¥start£end¤nameªIdentifierÌ‰Ì“ªEditDialogLªIdentifierÌ‰Ì“ªEditDialogÔrM•¤type¥start£end¥value£raw§LiteralÌ›Ì©¬./EditDialog®'./EditDialog'J±ImportDeclarationÌ¬ÌÔ‘K¯ImportSpecifierÌµÌ¾LªIdentifierÌµÌ¾©AddDialogLªIdentifierÌµÌ¾©AddDialogM§LiteralÌÆÌÓ«./AddDialog­'./AddDialog'J±ImportDeclarationÌÖÍ ‘ÔrN”¤type¥start£end¥local¶ImportDefaultSpecifierÌÝÌéLªIdentifierÌÝÌé¬DeviceSearchM§LiteralÌïÌÿ®./DeviceSearch°'./DeviceSearch'J±ImportDeclarationÍÍ3‘N¶ImportDefaultSpecifierÍ	ÍLªIdentifierÍ	ÍªDeviceDateM§LiteralÍÍ2·../viewmodel/DeviceData¹'../viewmodel/DeviceData'J±ImportDeclarationÍ5Íf‘N¶ImportDefaultSpecifierÍ<ÍFLªIdentifierÍ<ÍFªDeviceItemM§LiteralÍLÍe·../viewmodel/DeviceItem¹'../viewmodel/DeviceItem'J±ImportDeclarationÍhÍŒ‘K¯ImportSpecifierÍqÍwLªIdentifierÍqÍw¦routerLªIdentifierÍqÍw¦routerM§LiteralÍÍ‹ª@kit.ArkUI¬'@kit.ArkUI'J±ImportDeclarationÍŽÍÄ‘N¶ImportDefaultSpecifierÍ•ÍžLªIdentifierÍ•Íž©MemoTableM§LiteralÍ¤ÍÃ½ets/common/database/MemoTable¿'ets/common/database/MemoTable'J±ImportDeclarationÍÆÍì‘N¶ImportDefaultSpecifierÍÍÍÓLªIdentifierÍÍÍÓ¦LoggerM§LiteralÍÙÍë°ets/utils/Logger²'ets/utils/Logger'

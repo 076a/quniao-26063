@@ -1,0 +1,502 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚ)÷import relationalStore from '@ohos.data.relationalStore';
+import CommonConstants from '../constants/CommonConstants';
+import Logger from 'ets/utils/Logger';
+// æŠ½è±¡çš„Rdbç±»ï¼Œæ²¡æœ‰ä¸šåŠ¡å±æ€§ï¼Œå¯ä»¥åŸºäºè¿™ä¸ªç±»åˆ›å»ºå¸¦æœ‰ä¸šåŠ¡å±æ€§çš„ä¸€å¼ æˆ–å¤šå¼ è¡¨
+export default class Rdb {
+    // å®ä¾‹åŒ– Rdb å¯¹è±¡æ—¶ï¼Œåˆå§‹åŒ–è¡¨åã€åˆ›å»ºè¡¨çš„è¯­å¥ã€åˆ—åå­—æ®µçš„æ•°ç»„
+    constructor(tableName, sqlCreateTable, columns) {
+        // ç®¡ç†å…³ç³»æ•°æ®åº“(RDB)æ–¹æ³•å±æ€§ ç±»å‹æ˜¯RdbStore æˆ– null
+        this.rdbStore = null;
+        this.tableName = tableName;
+        this.sqlCreateTable = sqlCreateTable;
+        this.columns = columns;
+    }
+    // è·å–æ“ä½œæ•°æ®åº“RdbStoreå¯¹è±¡çš„æ–¹æ³•ï¼Œæ¥æ”¶ä¸€ä¸ªå›è°ƒå‡½æ•°
+    getRdbStore(callback = () => { }) {
+        // å¦‚æœ å›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+        if (!callback || typeof callback === 'undefined' || callback === undefined) {
+            Logger.info(CommonConstants.RDB_TAG, 'getRdbStore() has no callback!');
+            return;
+        }
+        // å¦‚æœå±æ€§rdbStore ä¸ä¸ºç©ºï¼Œè¯´æ˜æ“ä½œå¯¹è±¡å·²ç»åˆå§‹åŒ–ï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œé€€å‡ºæ–¹æ³•
+        if (this.rdbStore !== null) {
+            Logger.info(CommonConstants.RDB_TAG, 'The rdbStore exists.');
+            callback();
+            return;
+        }
+        // æ‰§è¡Œåˆ°æ­¤å¤„ï¼Œè¯´æ˜å›è°ƒå‡½æ•°ä¸ä¸ºç©ºï¼Œä¸”rdbStoreå°šæœªåˆå§‹åŒ–
+        // è·å–ä¸Šä¸‹æ–‡
+        let context = getContext(this);
+        // ä½¿ç”¨ä¸Šä¸‹æ–‡å¯¹è±¡ï¼Œè·å–æ•°æ®åº“æ“ä½œå¯¹è±¡
+        relationalStore.getRdbStore(context, CommonConstants.STORE_CONFIG, (err, rdbStore) => {
+            // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+            if (err) {
+                Logger.error(CommonConstants.RDB_TAG, `getRdbStore() failed, err: ${err}`);
+                return;
+            }
+            // å¦‚æœæˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œå°†rdbStoreèµ‹å€¼ç»™å±æ€§
+            Logger.info(CommonConstants.RDB_TAG, 'getRdbStore() finished.');
+            this.rdbStore = rdbStore;
+            // æ‰§è¡Œåˆ›å»ºè¡¨çš„æ–¹æ³•
+            this.executeSql(callback);
+            // æ£€æŸ¥å¹¶æ·»åŠ æ–°åˆ—
+            this.checkAndAddColumns(rdbStore);
+        });
+    }
+    // æ£€æŸ¥å¹¶æ·»åŠ æ–°åˆ—
+    checkAndAddColumns(rdbStore) {
+        if (!rdbStore)
+            return;
+        // æ£€æŸ¥è¡¨ç»“æ„ï¼Œæ·»åŠ ç¼ºå¤±çš„åˆ—
+        const alterTableSql = [
+            `ALTER TABLE ${this.tableName} ADD COLUMN autoMode INTEGER DEFAULT 0`,
+            `ALTER TABLE ${this.tableName} ADD COLUMN intervalTime TEXT DEFAULT ""`,
+            `ALTER TABLE ${this.tableName} ADD COLUMN positionX TEXT DEFAULT ""`,
+            `ALTER TABLE ${this.tableName} ADD COLUMN positionY TEXT DEFAULT ""`
+        ];
+        // é€ä¸ªå°è¯•æ·»åŠ åˆ—ï¼ˆå¦‚æœåˆ—å·²å­˜åœ¨ä¼šæŠ›å‡ºé”™è¯¯ï¼Œä½†æˆ‘ä»¬å¯ä»¥å¿½ç•¥ï¼‰
+        alterTableSql.forEach(sql => {
+            try {
+                rdbStore.executeSql(sql, []);
+                Logger.info(CommonConstants.RDB_TAG, `Added column: ${sql}`);
+            }
+            catch (error) {
+                // åˆ—å¯èƒ½å·²å­˜åœ¨ï¼Œå¿½ç•¥é”™è¯¯
+                Logger.info(CommonConstants.RDB_TAG, `Column may already exist: ${error}`);
+            }
+        });
+    }
+    // æ‰§è¡ŒSQLè¯­å¥åˆ›å»ºè¡¨
+    executeSql(callback) {
+        if (this.rdbStore) {
+            this.rdbStore.executeSql(this.sqlCreateTable, [], (err) => {
+                if (err) {
+                    Logger.error(CommonConstants.RDB_TAG, `executeSql() failed, err: ${err}`);
+                    return;
+                }
+                Logger.info(CommonConstants.RDB_TAG, 'executeSql() finished.');
+                callback();
+            });
+        }
+        else {
+            Logger.error(CommonConstants.RDB_TAG, 'executeSql() failed, rdbStore is null.');
+        }
+    }
+    // å…³é—­æ•°æ®åº“è¿æ¥
+    closeRdbStore() {
+        if (this.rdbStore) {
+            this.rdbStore.close();
+            this.rdbStore = null;
+            Logger.info(CommonConstants.RDB_TAG, 'RdbStore closed.');
+        }
+    }
+    // æ’å…¥æ•°æ®çš„æ–¹æ³•ï¼Œå…¥å‚ä¸ºè¡¨æ ¼çš„å­˜å‚¨é”®å€¼å¯¹ï¼Œå’Œå›è°ƒå‡½æ•°
+    insertData(data, callback = () => { }) {
+        // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+        if (!callback || typeof callback === 'undefined' || callback === undefined) {
+            Logger.info(CommonConstants.RDB_TAG, 'insertData() has no callback!');
+            return;
+        }
+        // åˆ›å»ºç»“æœæ ‡è¯†å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºfalse
+        let resFlag = false;
+        // åˆ›å»ºå­˜å‚¨é”®å€¼å¯¹å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºå…¥å‚data
+        const valueBucket = data;
+        // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+        if (this.rdbStore) {
+            try {
+                // å¼€å§‹äº‹åŠ¡
+                this.rdbStore.beginTransaction();
+                // æ‰§è¡ŒrdbStoreçš„æ’å…¥æ•°æ®æ–¹æ³•ï¼Œå…¥å‚ä¸ºè¡¨åã€å­˜å‚¨é”®å€¼å¯¹ã€å¼‚æ­¥å›è°ƒå‡½æ•°
+                this.rdbStore.insert(this.tableName, valueBucket, (err, ret) => {
+                    if (err) {
+                        // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œå›æ»šäº‹åŠ¡
+                        this.rdbStore?.rollBack();
+                        // æ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥ç»“æœæ ‡è¯† false
+                        Logger.error(CommonConstants.RDB_TAG, `insertData() failed, err: ${err}`);
+                        callback(resFlag);
+                        return;
+                    }
+                    try {
+                        // æäº¤äº‹åŠ¡
+                        this.rdbStore?.commit();
+                        // å¦‚æœæ“ä½œæˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥è¿”å›retï¼ˆè¡ŒIDï¼‰
+                        Logger.info(CommonConstants.RDB_TAG, `insertData() finished: ${ret}`);
+                        callback(ret);
+                    }
+                    catch (commitErr) {
+                        // æäº¤äº‹åŠ¡å¤±è´¥ï¼Œå›æ»šäº‹åŠ¡
+                        this.rdbStore?.rollBack();
+                        Logger.error(CommonConstants.RDB_TAG, `Failed to commit transaction: ${commitErr}`);
+                        callback(resFlag);
+                    }
+                });
+            }
+            catch (transactionErr) {
+                // å¼€å§‹äº‹åŠ¡å¤±è´¥
+                Logger.error(CommonConstants.RDB_TAG, `Failed to begin transaction: ${transactionErr}`);
+                callback(resFlag);
+            }
+        }
+    }
+    // åˆ é™¤æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶è°“è¯å’Œå›è°ƒå‡½æ•°ä¸¤ä¸ªå‚æ•°
+    deleteData(predicates, callback = () => {
+    }) {
+        // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+        if (!callback || typeof callback === 'undefined' || callback === undefined) {
+            Logger.info(CommonConstants.RDB_TAG, 'deleteData() has no callback!');
+            return;
+        }
+        // åˆ›å»ºç»“æœæ ‡è¯†å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºfalse
+        let resFlag = false;
+        // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+        if (this.rdbStore) {
+            // rdbStoreçš„åˆ é™¤æ–¹æ³•ï¼Œå…¥å‚ä¸ºè°“è¯ã€å¼‚æ­¥å›è°ƒå‡½æ•°
+            this.rdbStore.delete(predicates, (err, ret) => {
+                // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥ç»“æœæ ‡è¯† false
+                if (err) {
+                    Logger.error(CommonConstants.RDB_TAG, `deleteData() failed, err: ${err}`);
+                    callback(resFlag);
+                    return;
+                }
+                // å¦‚æœåˆ é™¤æˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥è¿”å›retï¼ˆè¡ŒIDï¼‰
+                Logger.info(CommonConstants.RDB_TAG, `deleteData() finished: ${ret}`);
+                callback(!resFlag);
+            });
+        }
+    }
+    // æ›´æ–°æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶ä¸‰ä¸ªå‚æ•°ï¼šè°“è¯ã€å­˜å‚¨é”®å€¼å¯¹ã€å›è°ƒå‡½æ•°
+    updateData(predicates, data, callback = () => { }) {
+        // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+        if (!callback || typeof callback === 'undefined' || callback === undefined) {
+            Logger.info(CommonConstants.RDB_TAG, 'updateDate() has no callback!');
+            return;
+        }
+        // åˆ›å»ºç»“æœæ ‡è¯†å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºfalse
+        let resFlag = false;
+        // åˆ›å»ºå­˜å‚¨é”®å€¼å¯¹å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºå…¥å‚data
+        const valueBucket = data;
+        // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+        if (this.rdbStore) {
+            // rdbStoreçš„æ›´æ–°æ–¹æ³•ï¼Œæ¥æ”¶ä¸‰ä¸ªå‚æ•°ï¼Œå­˜å‚¨é”®å€¼å¯¹ã€è°“è¯ã€å›è°ƒå‡½æ•°
+            this.rdbStore.update(valueBucket, predicates, (err, ret) => {
+                if (err) {
+                    // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥ç»“æœæ ‡è¯† false
+                    Logger.error(CommonConstants.RDB_TAG, `updateData() failed, err: ${err}`);
+                    callback(resFlag);
+                    return;
+                }
+                // å¦‚æœæ›´æ–°æˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥è¿”å›æˆåŠŸçš„æ ‡è¯† true
+                Logger.info(CommonConstants.RDB_TAG, `updateData() finished: ${ret}`);
+                callback(!resFlag);
+            });
+        }
+    }
+    // æŸ¥è¯¢æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶ä¸¤ä¸ªå‚æ•°ï¼Œè°“è¯ã€å›è°ƒå‡½æ•°
+    query(predicates, callback = () => {
+    }) {
+        // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+        if (!callback || typeof callback === 'undefined' || callback === undefined) {
+            Logger.info(CommonConstants.RDB_TAG, 'query() has no callback!');
+            return;
+        }
+        // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+        if (this.rdbStore) {
+            // rdbStoreçš„æŸ¥è¯¢æ–¹æ³•ï¼Œæ¥æ”¶ä¸‰ä¸ªå‚æ•°ï¼Œè°“è¯ï¼Œæ•°æ®åº“åˆ—åçš„æ•°ç»„ï¼Œå¼‚æ­¥å›è°ƒå‡½æ•°
+            this.rdbStore.query(predicates, this.columns, (err, resultSet) => {
+                // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+                if (err) {
+                    Logger.error(CommonConstants.RDB_TAG, `query() failed, err:  ${err}`);
+                    return;
+                }
+                // å¦‚æœæ²¡æœ‰é”™è¯¯ï¼Œæ‰“å°æ—¥å¿—
+                Logger.info(CommonConstants.RDB_TAG, 'query() finished.');
+                // æ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œä¼ å…¥æŸ¥è¯¢ç»“æœ
+                callback(resultSet);
+                // å…³é—­ç»“æœé›†
+                resultSet.close();
+            });
+        }
+    }
+}
+//# sourceMappingURL=Rdb.js.mapÂ“Ùe hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.data.relationalStore.d.tsÙeD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\constants\CommonConstants.etsÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsÙXD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\Rdb.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath¬shouldEmitJs¯hostModulesInfo¥entryÃÂÙ3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÙ-D:\APPkf\huawei_app\PageAndData02\02_Complete¥entry¥1.0.0Ô  Ù3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÃ‘ÔrC’²hostDependencyName®hostModuleName¥./Rdb¥entryÃÚ'Æimport relationalStore from '@ohos.data.relationalStore';
+import CommonConstants from '../constants/CommonConstants';
+import Logger from 'ets/utils/Logger';
+
+// æŠ½è±¡çš„Rdbç±»ï¼Œæ²¡æœ‰ä¸šåŠ¡å±æ€§ï¼Œå¯ä»¥åŸºäºè¿™ä¸ªç±»åˆ›å»ºå¸¦æœ‰ä¸šåŠ¡å±æ€§çš„ä¸€å¼ æˆ–å¤šå¼ è¡¨
+
+export default class Rdb {
+
+  // ç®¡ç†å…³ç³»æ•°æ®åº“(RDB)æ–¹æ³•å±æ€§ ç±»å‹æ˜¯RdbStore æˆ– null
+  private rdbStore: relationalStore.RdbStore | null = null;
+
+  // æ•°æ®åº“è¡¨åç§°
+  private tableName: string;
+
+  // åˆ›å»ºSQLiteè¡¨çš„è¯­å¥å­—ç¬¦ä¸²
+  private sqlCreateTable: string;
+
+  // åˆ—åå­—æ®µçš„æ•°ç»„
+  private columns: Array<string>;
+
+  // å®ä¾‹åŒ– Rdb å¯¹è±¡æ—¶ï¼Œåˆå§‹åŒ–è¡¨åã€åˆ›å»ºè¡¨çš„è¯­å¥ã€åˆ—åå­—æ®µçš„æ•°ç»„
+  constructor(tableName: string, sqlCreateTable: string, columns: Array<string>) {
+    this.tableName = tableName;
+    this.sqlCreateTable = sqlCreateTable;
+    this.columns = columns;
+  }
+
+  // è·å–æ“ä½œæ•°æ®åº“RdbStoreå¯¹è±¡çš„æ–¹æ³•ï¼Œæ¥æ”¶ä¸€ä¸ªå›è°ƒå‡½æ•°
+  getRdbStore(callback: Function = () => {}) {
+    // å¦‚æœ å›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+    if (!callback || typeof callback === 'undefined' || callback === undefined) {
+      Logger.info(CommonConstants.RDB_TAG, 'getRdbStore() has no callback!');
+      return;
+    }
+
+    // å¦‚æœå±æ€§rdbStore ä¸ä¸ºç©ºï¼Œè¯´æ˜æ“ä½œå¯¹è±¡å·²ç»åˆå§‹åŒ–ï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œé€€å‡ºæ–¹æ³•
+    if (this.rdbStore !== null) {
+      Logger.info(CommonConstants.RDB_TAG, 'The rdbStore exists.');
+      callback();
+      return
+    }
+
+    // æ‰§è¡Œåˆ°æ­¤å¤„ï¼Œè¯´æ˜å›è°ƒå‡½æ•°ä¸ä¸ºç©ºï¼Œä¸”rdbStoreå°šæœªåˆå§‹åŒ–
+    // è·å–ä¸Šä¸‹æ–‡
+    let context: Context = getContext(this) as Context;
+    
+    // ä½¿ç”¨ä¸Šä¸‹æ–‡å¯¹è±¡ï¼Œè·å–æ•°æ®åº“æ“ä½œå¯¹è±¡
+    relationalStore.getRdbStore(context, CommonConstants.STORE_CONFIG, (err, rdbStore) => {
+      // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+      if (err) {
+        Logger.error(CommonConstants.RDB_TAG, `getRdbStore() failed, err: ${err}`);
+        return;
+      }
+      // å¦‚æœæˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œå°†rdbStoreèµ‹å€¼ç»™å±æ€§
+      Logger.info(CommonConstants.RDB_TAG, 'getRdbStore() finished.');
+      this.rdbStore = rdbStore;
+      // æ‰§è¡Œåˆ›å»ºè¡¨çš„æ–¹æ³•
+      this.executeSql(callback);
+      
+      // æ£€æŸ¥å¹¶æ·»åŠ æ–°åˆ—
+      this.checkAndAddColumns(rdbStore);
+    });
+  }
+
+  // æ£€æŸ¥å¹¶æ·»åŠ æ–°åˆ—
+  private checkAndAddColumns(rdbStore: relationalStore.RdbStore) {
+    if (!rdbStore) return;
+    
+    // æ£€æŸ¥è¡¨ç»“æ„ï¼Œæ·»åŠ ç¼ºå¤±çš„åˆ—
+    const alterTableSql = [
+      `ALTER TABLE ${this.tableName} ADD COLUMN autoMode INTEGER DEFAULT 0`,
+      `ALTER TABLE ${this.tableName} ADD COLUMN intervalTime TEXT DEFAULT ""`,
+      `ALTER TABLE ${this.tableName} ADD COLUMN positionX TEXT DEFAULT ""`,
+      `ALTER TABLE ${this.tableName} ADD COLUMN positionY TEXT DEFAULT ""`
+    ];
+    
+    // é€ä¸ªå°è¯•æ·»åŠ åˆ—ï¼ˆå¦‚æœåˆ—å·²å­˜åœ¨ä¼šæŠ›å‡ºé”™è¯¯ï¼Œä½†æˆ‘ä»¬å¯ä»¥å¿½ç•¥ï¼‰
+    alterTableSql.forEach(sql => {
+      try {
+        rdbStore.executeSql(sql, []);
+        Logger.info(CommonConstants.RDB_TAG, `Added column: ${sql}`);
+      } catch (error) {
+        // åˆ—å¯èƒ½å·²å­˜åœ¨ï¼Œå¿½ç•¥é”™è¯¯
+        Logger.info(CommonConstants.RDB_TAG, `Column may already exist: ${error}`);
+      }
+    });
+  }
+
+  // æ‰§è¡ŒSQLè¯­å¥åˆ›å»ºè¡¨
+  private executeSql(callback: Function) {
+    if (this.rdbStore) {
+      this.rdbStore.executeSql(this.sqlCreateTable, [], (err) => {
+        if (err) {
+          Logger.error(CommonConstants.RDB_TAG, `executeSql() failed, err: ${err}`);
+          return;
+        }
+        Logger.info(CommonConstants.RDB_TAG, 'executeSql() finished.');
+        callback();
+      });
+    } else {
+      Logger.error(CommonConstants.RDB_TAG, 'executeSql() failed, rdbStore is null.');
+    }
+  }
+
+  // å…³é—­æ•°æ®åº“è¿æ¥
+  closeRdbStore() {
+    if (this.rdbStore) {
+      this.rdbStore.close();
+      this.rdbStore = null;
+      Logger.info(CommonConstants.RDB_TAG, 'RdbStore closed.');
+    }
+  }
+
+  // æ’å…¥æ•°æ®çš„æ–¹æ³•ï¼Œå…¥å‚ä¸ºè¡¨æ ¼çš„å­˜å‚¨é”®å€¼å¯¹ï¼Œå’Œå›è°ƒå‡½æ•°
+  insertData(data: relationalStore.ValuesBucket, callback: Function = () => {}) {
+    // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+    if (!callback || typeof callback === 'undefined' || callback === undefined) {
+      Logger.info(CommonConstants.RDB_TAG, 'insertData() has no callback!');
+      return;
+    }
+    // åˆ›å»ºç»“æœæ ‡è¯†å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºfalse
+    let resFlag: boolean = false;
+    // åˆ›å»ºå­˜å‚¨é”®å€¼å¯¹å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºå…¥å‚data
+    const valueBucket: relationalStore.ValuesBucket = data;
+    // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+    if (this.rdbStore) {
+      try {
+        // å¼€å§‹äº‹åŠ¡
+        this.rdbStore.beginTransaction();
+        
+        // æ‰§è¡ŒrdbStoreçš„æ’å…¥æ•°æ®æ–¹æ³•ï¼Œå…¥å‚ä¸ºè¡¨åã€å­˜å‚¨é”®å€¼å¯¹ã€å¼‚æ­¥å›è°ƒå‡½æ•°
+        this.rdbStore.insert(this.tableName, valueBucket, (err: Error | null, ret: number) => {
+          if (err) {
+            // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œå›æ»šäº‹åŠ¡
+            this.rdbStore?.rollBack();
+            // æ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥ç»“æœæ ‡è¯† false
+            Logger.error(CommonConstants.RDB_TAG, `insertData() failed, err: ${err}`);
+            callback(resFlag);
+            return;
+          }
+          
+          try {
+            // æäº¤äº‹åŠ¡
+            this.rdbStore?.commit();
+            // å¦‚æœæ“ä½œæˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥è¿”å›retï¼ˆè¡ŒIDï¼‰
+            Logger.info(CommonConstants.RDB_TAG, `insertData() finished: ${ret}`);
+            callback(ret);
+          } catch (commitErr) {
+            // æäº¤äº‹åŠ¡å¤±è´¥ï¼Œå›æ»šäº‹åŠ¡
+            this.rdbStore?.rollBack();
+            Logger.error(CommonConstants.RDB_TAG, `Failed to commit transaction: ${commitErr}`);
+            callback(resFlag);
+          }
+        });
+      } catch (transactionErr) {
+        // å¼€å§‹äº‹åŠ¡å¤±è´¥
+        Logger.error(CommonConstants.RDB_TAG, `Failed to begin transaction: ${transactionErr}`);
+        callback(resFlag);
+      }
+    }
+  }
+
+  // åˆ é™¤æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶è°“è¯å’Œå›è°ƒå‡½æ•°ä¸¤ä¸ªå‚æ•°
+  deleteData(predicates: relationalStore.RdbPredicates, callback: Function = () => {
+  }) {
+    // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+    if (!callback || typeof callback === 'undefined' || callback === undefined) {
+      Logger.info(CommonConstants.RDB_TAG, 'deleteData() has no callback!');
+      return;
+    }
+    // åˆ›å»ºç»“æœæ ‡è¯†å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºfalse
+    let resFlag: boolean = false;
+    // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+    if (this.rdbStore) {
+      // rdbStoreçš„åˆ é™¤æ–¹æ³•ï¼Œå…¥å‚ä¸ºè°“è¯ã€å¼‚æ­¥å›è°ƒå‡½æ•°
+      this.rdbStore.delete(predicates, (err, ret) => {
+        // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥ç»“æœæ ‡è¯† false
+        if (err) {
+          Logger.error(CommonConstants.RDB_TAG, `deleteData() failed, err: ${err}`);
+          callback(resFlag);
+          return;
+        }
+        // å¦‚æœåˆ é™¤æˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥è¿”å›retï¼ˆè¡ŒIDï¼‰
+        Logger.info(CommonConstants.RDB_TAG, `deleteData() finished: ${ret}`);
+        callback(!resFlag);
+      });
+    }
+  }
+
+  // æ›´æ–°æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶ä¸‰ä¸ªå‚æ•°ï¼šè°“è¯ã€å­˜å‚¨é”®å€¼å¯¹ã€å›è°ƒå‡½æ•°
+  updateData(predicates: relationalStore.RdbPredicates, data: relationalStore.ValuesBucket, callback: Function = () => {}) {
+    // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+    if (!callback || typeof callback === 'undefined' || callback === undefined) {
+      Logger.info(CommonConstants.RDB_TAG, 'updateDate() has no callback!');
+      return;
+    }
+    // åˆ›å»ºç»“æœæ ‡è¯†å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºfalse
+    let resFlag: boolean = false;
+    // åˆ›å»ºå­˜å‚¨é”®å€¼å¯¹å±€éƒ¨å˜é‡ï¼Œé»˜è®¤ä¸ºå…¥å‚data
+    const valueBucket: relationalStore.ValuesBucket = data;
+    // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+    if (this.rdbStore) {
+      // rdbStoreçš„æ›´æ–°æ–¹æ³•ï¼Œæ¥æ”¶ä¸‰ä¸ªå‚æ•°ï¼Œå­˜å‚¨é”®å€¼å¯¹ã€è°“è¯ã€å›è°ƒå‡½æ•°
+      this.rdbStore.update(valueBucket, predicates, (err: Error | null, ret: number) => {
+        if (err) {
+          // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥ç»“æœæ ‡è¯† false
+          Logger.error(CommonConstants.RDB_TAG, `updateData() failed, err: ${err}`);
+          callback(resFlag);
+          return;
+        }
+        // å¦‚æœæ›´æ–°æˆåŠŸï¼Œæ‰“å°æ—¥å¿—ï¼Œæ‰§è¡Œå›è°ƒå‡½æ•°ï¼Œå¹¶ä¼ å…¥è¿”å›æˆåŠŸçš„æ ‡è¯† true
+        Logger.info(CommonConstants.RDB_TAG, `updateData() finished: ${ret}`);
+        callback(!resFlag);
+      });
+    }
+  }
+
+  // æŸ¥è¯¢æ•°æ®çš„æ–¹æ³•ï¼Œæ¥æ”¶ä¸¤ä¸ªå‚æ•°ï¼Œè°“è¯ã€å›è°ƒå‡½æ•°
+  query(predicates: relationalStore.RdbPredicates, callback: Function = () => {
+  }) {
+    // å¦‚æœå›è°ƒå‡½æ•°ä¸ºç©ºã€æˆ–undefined æ‰“å°é”™è¯¯æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+    if (!callback || typeof callback === 'undefined' || callback === undefined) {
+      Logger.info(CommonConstants.RDB_TAG, 'query() has no callback!');
+      return;
+    }
+    // å¦‚æœrdbStoreå­˜åœ¨åˆ™æ‰§è¡Œ
+    if (this.rdbStore) {
+      // rdbStoreçš„æŸ¥è¯¢æ–¹æ³•ï¼Œæ¥æ”¶ä¸‰ä¸ªå‚æ•°ï¼Œè°“è¯ï¼Œæ•°æ®åº“åˆ—åçš„æ•°ç»„ï¼Œå¼‚æ­¥å›è°ƒå‡½æ•°
+      this.rdbStore.query(predicates, this.columns, (err: Error | null, resultSet: relationalStore.ResultSet) => {
+        // å¦‚æœå‘ç”Ÿé”™è¯¯ï¼Œæ‰“å°æ—¥å¿—ï¼Œé€€å‡ºæ–¹æ³•
+        if (err) {
+          Logger.error(CommonConstants.RDB_TAG, `query() failed, err:  ${err}`);
+          return;
+        }
+        // å¦‚æœæ²¡æœ‰é”™è¯¯ï¼Œæ‰“å°æ—¥å¿—
+        Logger.info(CommonConstants.RDB_TAG, 'query() finished.');
+        // æ‰§è¡Œå…¥å‚çš„å›è°ƒå‡½æ•°ï¼Œä¼ å…¥æŸ¥è¯¢ç»“æœ
+        callback(resultSet);
+        // å…³é—­ç»“æœé›†
+        resultSet.close();
+      });
+    }
+  }
+
+}ÀÔrD“º@ohos.data.relationalStore¼../constants/CommonConstants°ets/utils/LoggerÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙe hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.data.relationalStore.d.tsAÃªoh-resolveÂEAÂÙeD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\constants\CommonConstants.etsAÃªoh-resolveÂEAÂÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂ“ÔrF–§version¤fileªsourceRoot§sources¥names¨mappings¦Rdb.js ‘§Rdb.etsÜ Ü–”    ”  ”  ”  ”8  8”9  9–”   ” ” ” ”: :”; ;–”   ” ” ” ”% %”& &’”   ”( (–”   ” ” ” ” ” ’” ”' %—” ” ” ” !”) 7”+ 9”2 ÌO’” ”. (•” 	
+” 	” 	6” 	:” 	;—” ” ” 	” ” ”" ”# —” ” ” 	” ” ”, (”- )—” ” ” 	” ” ” ” ’” ” ’” ”$ "˜” ” ” ” #” &”  (”# *”$ +’” ”+ '” ” ” 	” ” ”  ”( $”- )”8 4”< 8”ÌD Ì@”ÌI ÌE”ÌR ÌN”ÌT ÌPœ” ” ” ” ” ”' !”( "”/ )”1 +”ÌQ ÌK”ÌR ÌL”ÌS ÌM’”  ”  ‘”	 !’” #”8 #4˜” $” $” $” $” $” $”" $”$ $ œ” %” %” %” %” %”' %!”( %"”/ %)”1 %+”ÌG %ÌA”ÌH %ÌB”ÌI %ÌC”” &” &” &” &’” '” '‘”	 (’” *”) *%’” +” +™” ,” ,” ,” ,”  ,%”! ,&”% ,*”& ,6”' ,7’” .” .Ü ” /” /” /”# /”$ / ”+ /'”- /)”< /8”= /9”ÌI /ÌE”ÌK /ÌG”ÌL /ÌH”ÌO /ÌK”ÌQ /ÌM”ÌY /ÌU”Ì[ /ÌW”Ì] /ÌY’” 0” 0”” 1” 1
+” 1” 1” 2” 2” 2” 2” 2”, 2$”- 2%”4 2,”6 2.”ÌT 2ÌL”ÌW 2ÌO”ÌY 2ÌQ”ÌZ 2ÌR”Ì[ 2ÌS’” 3” 3‘” 4’” 5”' 5!œ” 6” 6” 6” 6” 6”' 6!”( 6"”/ 6)”1 6+”ÌJ 6ÌD”ÌK 6ÌE”ÌL 6ÌF—” 7” 7
+” 7” 7” 7”$ 7”% 7’” 8” 8˜” 9” 9
+” 9” 9” 9”$ 9”% 9”& 9 ’” ;” ;˜” <” <
+” <”# <”$ <”, <&”- <'”. <(”” =”	 =”
+ =” =’” >” >’” Ì@” Ì@”” ÌA
+” ÌA” ÌA” ÌA?”” ÌB” ÌB” ÌB	” ÌB’” ÌB” ÌB’” ÌD” ÌD”” ÌE” ÌE
+” ÌE” ÌE–” ÌF” ÌF” ÌF”  ÌF”) ÌF#”ÌQ ÌFÌK–” ÌG” ÌG” ÌG”  ÌG”) ÌG#”ÌS ÌGÌM–” ÌH” ÌH” ÌH”  ÌH”) ÌH#”ÌP ÌHÌJ–” ÌI” ÌI” ÌI”  ÌI”) ÌI#”ÌP ÌIÌJ’”	 ÌJ”
+ ÌJ’” ÌL”' ÌL#˜” ÌM” ÌM” ÌM” ÌM” ÌM”! ÌM”" ÌM”$ ÌM ’” ÌN” ÌN
+š” ÌO” ÌO” ÌO”# ÌO”$ ÌO”' ÌO”) ÌO!”+ ÌO#”, ÌO$”- ÌO%” ÌP” ÌP” ÌP” ÌP” ÌP”+ ÌP#”, ÌP$”3 ÌP+”5 ÌP-”ÌF ÌP>”ÌI ÌPÌA”ÌK ÌPÌC”ÌL ÌPÌD”ÌM ÌPÌE‘” ÌQ”” ÌQ” ÌQ” ÌQ” ÌQ’” ÌR” ÌR” ÌS” ÌS” ÌS” ÌS” ÌS”+ ÌS#”, ÌS$”3 ÌS+”5 ÌS-”ÌR ÌSÌJ”ÌW ÌSÌO”ÌY ÌSÌQ”ÌZ ÌSÌR”Ì[ ÌSÌS‘” ÌT”” ÌU”	 ÌU”
+ ÌU” ÌU’” ÌV” ÌV’” ÌX” ÌX”” ÌY
+” ÌY” ÌY” ÌY'–” ÌZ” ÌZ” ÌZ” ÌZ” ÌZ” ÌZÜ ” Ì[” Ì[
+” Ì[” Ì[” Ì[”$ Ì[”% Ì[”) Ì[#”* Ì[$”8 Ì[2”: Ì[4”< Ì[6”> Ì[8”? Ì[9”ÌB Ì[<”ÌD Ì[>”ÌF Ì[Ì@”” Ì\” Ì\” Ì\” Ì\” Ì]
+” Ì]” Ì]”  Ì]”! Ì]”0 Ì]&”1 Ì]'”8 Ì].”: Ì]0”ÌW Ì]ÌM”ÌZ Ì]ÌP”Ì\ Ì]ÌR”Ì] Ì]ÌS”Ì^ Ì]ÌT’” Ì^
+” Ì^‘” Ì_	œ” Ì`” Ì`” Ì`” Ì`” Ì`”+ Ì`#”, Ì`$”3 Ì`+”5 Ì`-”ÌM Ì`ÌE”ÌN Ì`ÌF”ÌO Ì`ÌG”” Ìa” Ìa” Ìa” Ìa”” Ìb” Ìb” Ìb” Ìb	‘”	 Ìc‘” Ìcœ” Ìd” Ìd” Ìd” Ìd” Ìd”( Ìd"”) Ìd#”0 Ìd*”2 Ìd,”ÌZ ÌdÌT”Ì[ ÌdÌU”Ì\ ÌdÌV‘”	 Ìe’” Ìf” Ìf’” Ìh” Ìh’” Ìi” Ìi–” Ìj” Ìj” Ìj” Ìj” Ìj” Ìj˜” Ìk” Ìk
+” Ìk” Ìk” Ìk” Ìk”! Ìk”" Ìk—” Ìl” Ìl
+” Ìl” Ìl” Ìl”  Ìl”! Ìlœ” Ìm” Ìm” Ìm” Ìm” Ìm”' Ìm!”( Ìm"”/ Ìm)”1 Ìm+”ÌC Ìm=”ÌD Ìm>”ÌE Ìm?‘”	 Ìn’” Ìo” Ìo’” Ìq”  Ìqš” Ìr” Ìr” Ìr” Ìr/” Ìr1”  ÌrÌF”# ÌrÌI”% ÌrÌK”( ÌrÌM”) ÌrÌN’” Ìs”* Ìs&” Ìt” Ìt” Ìt	” Ìt” Ìt”  Ìt”( Ìt$”- Ìt)”8 Ìt4”< Ìt8”ÌD ÌtÌ@”ÌI ÌtÌE”ÌR ÌtÌN”ÌT ÌtÌPœ” Ìu” Ìu” Ìu” Ìu” Ìu”' Ìu!”( Ìu"”/ Ìu)”1 Ìu+”ÌP ÌuÌJ”ÌQ ÌuÌK”ÌR ÌuÌL’” Ìv” Ìv‘”	 Ìw’” Ìx” Ìx–” Ìy” Ìy” Ìy” Ìy” Ìy ” Ìy!’” Ìz”  Ìz–” Ì{” Ì{
+” Ì{” Ì{6”  Ì{:”! Ì{;’” Ì|” Ì|–” Ì}” Ì}” Ì}” Ì}” Ì}” Ì}’” Ì~” Ì~
+’” Ì” Ì˜” Ì€” Ì€” Ì€” Ì€” Ì€”. Ì€&”0 Ì€(”1 Ì€)’” Ì‚”7 Ì‚/Ü ” Ìƒ” Ìƒ” Ìƒ” Ìƒ” Ìƒ”$ Ìƒ”% Ìƒ”) Ìƒ!”* Ìƒ"”3 Ìƒ+”5 Ìƒ-”Ì@ Ìƒ8”ÌB Ìƒ:”ÌC Ìƒ;”ÌF ÌƒÌL”ÌH ÌƒÌN”ÌK ÌƒÌY”ÌM ÌƒÌ[”ÌO ÌƒÌ]”” Ì„
+” Ì„” Ì„” Ì„’” Ì…”& Ì…˜” Ì†” Ì†” Ì†”% Ì†”' Ì†”/ Ì†#”1 Ì†%”2 Ì†&’” Ì‡”7 Ì‡+” Ìˆ” Ìˆ” Ìˆ”$ Ìˆ”% Ìˆ”4 Ìˆ(”5 Ìˆ)”< Ìˆ0”> Ìˆ2”Ì[ ÌˆÌO”Ì^ ÌˆÌR”Ì` ÌˆÌT”Ìa ÌˆÌU”Ìb ÌˆÌV–” Ì‰”  Ì‰”! Ì‰”( Ì‰”) Ì‰”* Ì‰’” ÌŠ” ÌŠ‘” Ì‹’” Ì
+” Ì’” Ì” Ì˜” Ì” Ì” Ì”% Ì”' Ì”- Ì!”/ Ì#”0 Ì$’” Ì”; Ì/” Ì‘” Ì‘” Ì‘”# Ì‘”$ Ì‘”3 Ì‘'”4 Ì‘(”; Ì‘/”= Ì‘1”ÌW Ì‘ÌK”ÌZ Ì‘ÌN”Ì\ Ì‘ÌP”Ì] Ì‘ÌQ”Ì^ Ì‘ÌR–” Ì’”  Ì’”! Ì’”$ Ì’”% Ì’”& Ì’‘” Ì“”” Ì“” Ì“”$ Ì“”& Ì“’” Ì””& Ì”˜” Ì•” Ì•” Ì•”% Ì•”' Ì•”/ Ì•#”1 Ì•%”2 Ì•&” Ì–” Ì–” Ì–”$ Ì–”% Ì–”4 Ì–(”5 Ì–)”< Ì–0”> Ì–2”Ì_ Ì–ÌS”Ìh Ì–Ì\”Ìj Ì–Ì^”Ìk Ì–Ì_”Ìl Ì–Ì`–” Ì—”  Ì—”! Ì—”( Ì—”) Ì—”* Ì—‘” Ì˜”” Ì™” Ì™	” Ì™
+” Ì™‘” Ìš”” Ìš” Ìš”! Ìš”# Ìš’” Ì›” Ì›” Ìœ” Ìœ” Ìœ” Ìœ” Ìœ”, Ìœ$”- Ìœ%”4 Ìœ,”6 Ìœ.”ÌV ÌœÌN”Ìd ÌœÌ\”Ìf ÌœÌ^”Ìg ÌœÌ_”Ìh ÌœÌ`–” Ì” Ì” Ì”  Ì”! Ì”" Ì‘” Ì‘”	 ÌŸ’” Ì ” Ì ’” Ì¢” Ì¢˜” Ì£” Ì£” Ì£” Ì£6” Ì£8”& Ì£ÌM”) Ì£ÌP”+ Ì£ÌR’” Ì¤” Ì¤’” Ì¥”* Ì¥&” Ì¦” Ì¦” Ì¦	” Ì¦” Ì¦”  Ì¦”( Ì¦$”- Ì¦)”8 Ì¦4”< Ì¦8”ÌD Ì¦Ì@”ÌI Ì¦ÌE”ÌR Ì¦ÌN”ÌT Ì¦ÌPœ” Ì§” Ì§” Ì§” Ì§” Ì§”' Ì§!”( Ì§"”/ Ì§)”1 Ì§+”ÌP Ì§ÌJ”ÌQ Ì§ÌK”ÌR Ì§ÌL’” Ì¨” Ì¨‘”	 Ì©’” Ìª” Ìª–” Ì«” Ì«” Ì«” Ì«” Ì« ” Ì«!’” Ì¬” Ì¬–” Ì­” Ì­” Ì­” Ì­” Ì­” Ì­’” Ì®”) Ì®#Ÿ” Ì¯” Ì¯
+” Ì¯” Ì¯” Ì¯”  Ì¯”! Ì¯”+ Ì¯%”- Ì¯'”. Ì¯(”1 Ì¯+”3 Ì¯-”6 Ì¯0”8 Ì¯2”: Ì¯4’” Ì°”6 Ì°.”” Ì±” Ì±” Ì±” Ì±” Ì²
+” Ì²” Ì²”  Ì²”! Ì²”0 Ì²&”1 Ì²'”8 Ì².”: Ì²0”ÌW Ì²ÌM”ÌZ Ì²ÌP”Ì\ Ì²ÌR”Ì] Ì²ÌS”Ì^ Ì²ÌT–” Ì³
+” Ì³” Ì³”$ Ì³”% Ì³”& Ì³’” Ì´
+” Ì´‘” Ìµ	’” Ì¶”3 Ì¶+” Ì·” Ì·” Ì·” Ì·” Ì·”+ Ì·#”, Ì·$”3 Ì·+”5 Ì·-”ÌO Ì·ÌG”ÌR Ì·ÌJ”ÌT Ì·ÌL”ÌU Ì·ÌM”ÌV Ì·ÌN—” Ì¸” Ì¸” Ì¸” Ì¸”! Ì¸”" Ì¸”# Ì¸”” Ì¹” Ì¹” Ì¹” Ì¹	‘”	 Ìº’” Ì»” Ì»’” Ì½”# Ì½!œ” Ì¾” Ì¾” Ì¾” Ì¾6” Ì¾8” Ì¾ÌZ”! Ì¾Ì\”, Ì¾Ìq”/ Ì¾Ìt”1 Ì¾Ìv”4 Ì¾Ìx”5 Ì¾Ìy’” Ì¿”* Ì¿&” ÌÀ” ÌÀ” ÌÀ	” ÌÀ” ÌÀ”  ÌÀ”( ÌÀ$”- ÌÀ)”8 ÌÀ4”< ÌÀ8”ÌD ÌÀÌ@”ÌI ÌÀÌE”ÌR ÌÀÌN”ÌT ÌÀÌPœ” ÌÁ” ÌÁ” ÌÁ” ÌÁ” ÌÁ”' ÌÁ!”( ÌÁ"”/ ÌÁ)”1 ÌÁ+”ÌP ÌÁÌJ”ÌQ ÌÁÌK”ÌR ÌÁÌL’” ÌÂ” ÌÂ‘”	 ÌÃ’” ÌÄ” ÌÄ–” ÌÅ” ÌÅ” ÌÅ” ÌÅ” ÌÅ ” ÌÅ!’” ÌÆ”  ÌÆ–” ÌÇ” ÌÇ
+” ÌÇ” ÌÇ6”  ÌÇ:”! ÌÇ;’” ÌÈ” ÌÈ–” ÌÉ” ÌÉ” ÌÉ” ÌÉ” ÌÉ” ÌÉ’” ÌÊ”1 ÌÊ+Ü ” ÌË” ÌË
+” ÌË” ÌË” ÌË”  ÌË”! ÌË”, ÌË&”. ÌË(”8 ÌË2”: ÌË4”; ÌË5”> ÌËÌF”Ì@ ÌËÌH”ÌC ÌËÌS”ÌE ÌËÌU”ÌG ÌËÌW”” ÌÌ” ÌÌ” ÌÌ” ÌÌ’” ÌÍ
+”: ÌÍ0” ÌÎ
+” ÌÎ” ÌÎ”  ÌÎ”! ÌÎ”0 ÌÎ&”1 ÌÎ'”8 ÌÎ.”: ÌÎ0”ÌW ÌÎÌM”ÌZ ÌÎÌP”Ì\ ÌÎÌR”Ì] ÌÎÌS”Ì^ ÌÎÌT–” ÌÏ
+” ÌÏ” ÌÏ”$ ÌÏ”% ÌÏ”& ÌÏ’” ÌĞ
+” ÌĞ‘” ÌÑ	’” ÌÒ”5 ÌÒ-” ÌÓ” ÌÓ” ÌÓ” ÌÓ” ÌÓ”+ ÌÓ#”, ÌÓ$”3 ÌÓ+”5 ÌÓ-”ÌO ÌÓÌG”ÌR ÌÓÌJ”ÌT ÌÓÌL”ÌU ÌÓÌM”ÌV ÌÓÌN—” ÌÔ” ÌÔ” ÌÔ” ÌÔ”! ÌÔ”" ÌÔ”# ÌÔ”” ÌÕ” ÌÕ” ÌÕ” ÌÕ	‘”	 ÌÖ’” Ì×” Ì×’” ÌÙ” ÌÙ˜” ÌÚ”	 ÌÚ”
+ ÌÚ” ÌÚ1” ÌÚ3”! ÌÚÌH”$ ÌÚÌK”& ÌÚÌM’” ÌÛ” ÌÛ’” ÌÜ”* ÌÜ&” Ìİ” Ìİ” Ìİ	” Ìİ” Ìİ”  Ìİ”( Ìİ$”- Ìİ)”8 Ìİ4”< Ìİ8”ÌD ÌİÌ@”ÌI ÌİÌE”ÌR ÌİÌN”ÌT ÌİÌPœ” ÌŞ” ÌŞ” ÌŞ” ÌŞ” ÌŞ”' ÌŞ!”( ÌŞ"”/ ÌŞ)”1 ÌŞ+”ÌK ÌŞÌE”ÌL ÌŞÌF”ÌM ÌŞÌG’” Ìß” Ìß‘”	 Ìà’” Ìá” Ìá–” Ìâ” Ìâ” Ìâ” Ìâ” Ìâ” Ìâ’” Ìã”6 Ìã0Ü ” Ìä” Ìä
+” Ìä” Ìä” Ìä” Ìä”  Ìä”* Ìä$”, Ìä&”0 Ìä*”1 Ìä+”8 Ìä2”: Ìä4”; Ìä5”> ÌäÌF”Ì@ ÌäÌH”ÌI ÌäÌl”ÌK ÌäÌn”ÌM ÌäÌp’” Ìå”# Ìå”” Ìæ” Ìæ” Ìæ” Ìæ” Ìç
+” Ìç” Ìç”  Ìç”! Ìç”0 Ìç&”1 Ìç'”8 Ìç.”: Ìç0”ÌS ÌçÌI”ÌV ÌçÌL”ÌX ÌçÌN”ÌY ÌçÌO”ÌZ ÌçÌP’” Ìè
+” Ìè‘” Ìé	’” Ìê” Ìêœ” Ìë” Ìë” Ìë” Ìë” Ìë”+ Ìë#”, Ìë$”3 Ìë+”5 Ìë-”ÌH ÌëÌ@”ÌI ÌëÌA”ÌJ ÌëÌB’” Ìì”# Ìì–” Ìí” Ìí” Ìí”" Ìí”# Ìí”$ Ìí’” Ìî” Ìî–” Ìï” Ìï” Ìï” Ìï”! Ìï”" Ìï”” Ìğ” Ìğ” Ìğ” Ìğ	‘”	 Ìñ’” Ìò” Ìò‘” ÌôÔrG–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ İ‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ì ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌĞ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ÔrH’§missing¦pluginÃ¦genAbcÂÔ  ÔrI”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache“ÔrJ•¤type¥start£endªspecifiers¦source±ImportDeclaration 9‘ÔrK”¤type¥start£end¥local¶ImportDefaultSpecifierÔrL”¤type¥start£end¤nameªIdentifier¯relationalStoreÔrM•¤type¥start£end¥value£raw§Literal8º@ohos.data.relationalStore¼'@ohos.data.relationalStore'J±ImportDeclaration;Ìv‘K¶ImportDefaultSpecifierÌBÌQLªIdentifierÌBÌQ¯CommonConstantsM§LiteralÌWÌu¼../constants/CommonConstants¾'../constants/CommonConstants'J±ImportDeclarationÌxÌ‘K¶ImportDefaultSpecifierÌÌ…LªIdentifierÌÌ…¦LoggerM§LiteralÌ‹Ì°ets/utils/Logger²'ets/utils/Logger'
