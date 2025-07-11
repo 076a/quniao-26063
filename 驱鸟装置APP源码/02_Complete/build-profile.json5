@@ -1,0 +1,41 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\碎碎念\\.ohos\\config\\default_02_Complete_1XDqRtrPVLju-tvA0NRhntJ1WUg_dOIR6XFLXIqiEEg=.cer",
+          "storePassword": "0000001B6F1EC995097D7AA381FBD92FB9CE4B74C19DFD1B8DB7EB68B4E49C329084A43124295108DE6F2C",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B84EF5D0C118722B8DFFC70F829FB77542E2C80EB9BC1FB549F4907E3D5A74E231D84BF39F2D977",
+          "profile": "C:\\Users\\碎碎念\\.ohos\\config\\default_02_Complete_1XDqRtrPVLju-tvA0NRhntJ1WUg_dOIR6XFLXIqiEEg=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\碎碎念\\.ohos\\config\\default_02_Complete_1XDqRtrPVLju-tvA0NRhntJ1WUg_dOIR6XFLXIqiEEg=.p12"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.0(12)",
+        "runtimeOS": "HarmonyOS"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

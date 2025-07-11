@@ -1,0 +1,1381 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚ‚\if (!("finalizeConstruction" in ViewPU.prototype)) {
+    Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
+}
+import { promptAction } from '@kit.ArkUI';
+import DeviceDate from '../viewmodel/DeviceData';
+import MemoTable from 'ets/common/database/MemoTable';
+import { router } from '@kit.ArkUI';
+import Logger from 'ets/utils/Logger';
+import preferences from '@ohos.data.preferences';
+import axios from '@ohos/axios';
+import LogUtils from 'ets/utils/Logger';
+import CommonConstants from '../common/constants/CommonConstants';
+// åˆ›å»º axios å®žä¾‹
+const instance = axios.create({
+    baseURL: "http://10.33.86.16:8080",
+    timeout: 5000,
+});
+class AutoSettingDialog extends ViewPU {
+    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
+        super(parent, __localStorage, elmtId, extraInfo);
+        if (typeof paramsLambda === "function") {
+            this.paramsGenerator_ = paramsLambda;
+        }
+        this.__intervalTime = new ObservedPropertySimplePU(" ", this, "intervalTime");
+        this.__positionX = new ObservedPropertySimplePU(" ", this, "positionX");
+        this.__positionY = new ObservedPropertySimplePU(" ", this, "positionY");
+        this.__autoMode = new ObservedPropertySimplePU(false, this, "autoMode");
+        this.controller = undefined;
+        this.onSave = () => { };
+        this.setInitiallyProvidedValue(params);
+        this.finalizeConstruction();
+    }
+    setInitiallyProvidedValue(params) {
+        if (params.intervalTime !== undefined) {
+            this.intervalTime = params.intervalTime;
+        }
+        if (params.positionX !== undefined) {
+            this.positionX = params.positionX;
+        }
+        if (params.positionY !== undefined) {
+            this.positionY = params.positionY;
+        }
+        if (params.autoMode !== undefined) {
+            this.autoMode = params.autoMode;
+        }
+        if (params.controller !== undefined) {
+            this.controller = params.controller;
+        }
+        if (params.onSave !== undefined) {
+            this.onSave = params.onSave;
+        }
+    }
+    updateStateVars(params) {
+    }
+    purgeVariableDependenciesOnElmtId(rmElmtId) {
+        this.__intervalTime.purgeDependencyOnElmtId(rmElmtId);
+        this.__positionX.purgeDependencyOnElmtId(rmElmtId);
+        this.__positionY.purgeDependencyOnElmtId(rmElmtId);
+        this.__autoMode.purgeDependencyOnElmtId(rmElmtId);
+    }
+    aboutToBeDeleted() {
+        this.__intervalTime.aboutToBeDeleted();
+        this.__positionX.aboutToBeDeleted();
+        this.__positionY.aboutToBeDeleted();
+        this.__autoMode.aboutToBeDeleted();
+        SubscriberManager.Get().delete(this.id__());
+        this.aboutToBeDeletedInternal();
+    }
+    get intervalTime() {
+        return this.__intervalTime.get();
+    }
+    set intervalTime(newValue) {
+        this.__intervalTime.set(newValue);
+    }
+    get positionX() {
+        return this.__positionX.get();
+    }
+    set positionX(newValue) {
+        this.__positionX.set(newValue);
+    }
+    get positionY() {
+        return this.__positionY.get();
+    }
+    set positionY(newValue) {
+        this.__positionY.set(newValue);
+    }
+    get autoMode() {
+        return this.__autoMode.get();
+    }
+    set autoMode(newValue) {
+        this.__autoMode.set(newValue);
+    }
+    setController(ctr) {
+        this.controller = ctr;
+    }
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Page.ets(37:5)", "entry");
+            Column.padding(10);
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create("æ—¶é—´é—´éš”");
+            Text.debugLine("entry/src/main/ets/view/Page.ets(38:7)", "entry");
+            Text.fontSize(16);
+            Text.margin({ bottom: 8, top: 20 });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            TextInput.create({ placeholder: "è¾“å…¥æ—¶é—´", text: this.intervalTime });
+            TextInput.debugLine("entry/src/main/ets/view/Page.ets(42:7)", "entry");
+            TextInput.width('80%');
+            TextInput.onChange((value) => {
+                this.intervalTime = value;
+            });
+        }, TextInput);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create("X ä½ç½®");
+            Text.debugLine("entry/src/main/ets/view/Page.ets(48:7)", "entry");
+            Text.fontSize(16);
+            Text.margin({ top: 16, bottom: 8 });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            TextInput.create({ placeholder: "è¾“å…¥Xåæ ‡", text: this.positionX.toString() });
+            TextInput.debugLine("entry/src/main/ets/view/Page.ets(52:7)", "entry");
+            TextInput.width('80%');
+            TextInput.onChange((value) => {
+                this.positionX = value;
+            });
+        }, TextInput);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create("Y ä½ç½®");
+            Text.debugLine("entry/src/main/ets/view/Page.ets(58:7)", "entry");
+            Text.fontSize(16);
+            Text.margin({ top: 16, bottom: 8 });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            TextInput.create({ placeholder: "è¾“å…¥Yåæ ‡", text: this.positionY.toString() });
+            TextInput.debugLine("entry/src/main/ets/view/Page.ets(62:7)", "entry");
+            TextInput.width('80%');
+            TextInput.onChange((value) => {
+                this.positionY = value;
+            });
+        }, TextInput);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.debugLine("entry/src/main/ets/view/Page.ets(68:7)", "entry");
+            Row.justifyContent(FlexAlign.SpaceBetween);
+            Row.margin({ top: 20, bottom: 20 });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Button.createWithLabel("å–æ¶ˆ");
+            Button.debugLine("entry/src/main/ets/view/Page.ets(69:9)", "entry");
+            Button.onClick(() => this.controller?.close());
+            Button.margin({ right: 8 });
+        }, Button);
+        Button.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Button.createWithLabel("ä¿å­˜");
+            Button.debugLine("entry/src/main/ets/view/Page.ets(73:9)", "entry");
+            Button.onClick(() => {
+                this.onSave(this.intervalTime, this.positionX, this.positionY, this.autoMode);
+                this.controller?.close();
+            });
+        }, Button);
+        Button.pop();
+        Row.pop();
+        Column.pop();
+    }
+    rerender() {
+        this.updateDirtyElements();
+    }
+}
+class ManualSettingDialog extends ViewPU {
+    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
+        super(parent, __localStorage, elmtId, extraInfo);
+        if (typeof paramsLambda === "function") {
+            this.paramsGenerator_ = paramsLambda;
+        }
+        this.__positionX = new ObservedPropertySimplePU(" ", this, "positionX");
+        this.__positionY = new ObservedPropertySimplePU(" ", this, "positionY");
+        this.controller = undefined;
+        this.onLaunch = () => { };
+        this.uiContext = this.getUIContext();
+        this.TAG = 'ManualSettingDialog';
+        this.setInitiallyProvidedValue(params);
+        this.finalizeConstruction();
+    }
+    setInitiallyProvidedValue(params) {
+        if (params.positionX !== undefined) {
+            this.positionX = params.positionX;
+        }
+        if (params.positionY !== undefined) {
+            this.positionY = params.positionY;
+        }
+        if (params.controller !== undefined) {
+            this.controller = params.controller;
+        }
+        if (params.onLaunch !== undefined) {
+            this.onLaunch = params.onLaunch;
+        }
+        if (params.uiContext !== undefined) {
+            this.uiContext = params.uiContext;
+        }
+        if (params.TAG !== undefined) {
+            this.TAG = params.TAG;
+        }
+    }
+    updateStateVars(params) {
+    }
+    purgeVariableDependenciesOnElmtId(rmElmtId) {
+        this.__positionX.purgeDependencyOnElmtId(rmElmtId);
+        this.__positionY.purgeDependencyOnElmtId(rmElmtId);
+    }
+    aboutToBeDeleted() {
+        this.__positionX.aboutToBeDeleted();
+        this.__positionY.aboutToBeDeleted();
+        SubscriberManager.Get().delete(this.id__());
+        this.aboutToBeDeletedInternal();
+    }
+    get positionX() {
+        return this.__positionX.get();
+    }
+    set positionX(newValue) {
+        this.__positionX.set(newValue);
+    }
+    get positionY() {
+        return this.__positionY.get();
+    }
+    set positionY(newValue) {
+        this.__positionY.set(newValue);
+    }
+    setController(ctr) {
+        this.controller = ctr;
+    }
+    //
+    // // æ·»åŠ å“åº”æ‹¦æˆªå™¨
+    //
+    //
+    // // å‘é€å‘å°„è¯·æ±‚
+    // private async sendLaunchRequest(x: string, y: string) {
+    //   LogUtils.info(this.TAG, `Attempting to send launch request with coordinates: x=${x}, y=${y}`);
+    //
+    //   // è¾“å…¥éªŒè¯
+    //   if (!x || !y) {
+    //     LogUtils.warn(this.TAG, 'Invalid input: coordinates cannot be empty');
+    //     const toastOpts: ToastOptions = {
+    //       message: 'è¯·è¾“å…¥æœ‰æ•ˆçš„åæ ‡å€¼',
+    //       duration: 2000
+    //     };
+    //     prompt.showToast(toastOpts);
+    //     return;
+    //   }
+    //
+    //   const horizonAngle = Number(x);
+    //   const verticalAngle = Number(y);
+    //
+    //   if (isNaN(horizonAngle) || isNaN(verticalAngle)) {
+    //     LogUtils.warn(this.TAG, `Invalid number format: x=${x}, y=${y}`);
+    //     const toastOpts: ToastOptions = {
+    //       message: 'è¯·è¾“å…¥æœ‰æ•ˆçš„æ•°å­—',
+    //       duration: 2000
+    //     };
+    //     prompt.showToast(toastOpts);
+    //     return;
+    //   }
+    //
+    //   try {
+    //     const requestData: GeneratedObjectLiteralInterface_1 = {
+    //       target_device: "motor1",
+    //       horizon_angle: horizonAngle,
+    //       vertical_angle: verticalAngle
+    //     };
+    //
+    //     LogUtils.info(this.TAG, `Sending request with data: ${JSON.stringify(requestData)}`);
+    //
+    //     const loadingToast: ToastOptions = {
+    //       message: 'å‘å°„ä¸­...',
+    //       duration: 2000
+    //     };
+    //     prompt.showToast(loadingToast);
+    //
+    //
+    //     LogUtils.info(this.TAG, `Launch request successful: ${JSON.stringify(requestData)}`);
+    //
+    //     const toastOpts: ToastOptions = {
+    //       message: 'å‘å°„æˆåŠŸ',
+    //       duration: 2000
+    //     };
+    //     prompt.showToast(toastOpts);
+    //
+    //     // ä¿å­˜ä½ç½®æ•°æ®å¹¶è°ƒç”¨å›žè°ƒ
+    //     LogUtils.info(this.TAG, `Saving coordinates: x=${x}, y=${y}`);
+    //     this.onLaunch(x, y);
+    //
+    //   } catch (error) {
+    //     LogUtils.error(this.TAG, `Launch request failed: ${error.message}`);
+    //     LogUtils.error(this.TAG, `Error details: ${JSON.stringify(error)}`);
+    //
+    //     const toastOpts: ToastOptions = {
+    //       message: `å‘å°„å¤±è´¥ï¼š${error.message || 'æœªçŸ¥é”™è¯¯'}`,
+    //       duration: 2000
+    //     };
+    //     prompt.showToast(toastOpts);
+    //   }
+    // }
+    //
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Page.ets(173:5)", "entry");
+            Column.padding(10);
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create("X ä½ç½®");
+            Text.debugLine("entry/src/main/ets/view/Page.ets(174:7)", "entry");
+            Text.fontSize(16);
+            Text.margin({ top: 20, bottom: 8 });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            TextInput.create({ placeholder: "è¾“å…¥Xåæ ‡", text: this.positionX.toString() });
+            TextInput.debugLine("entry/src/main/ets/view/Page.ets(178:7)", "entry");
+            TextInput.width('80%');
+            TextInput.onChange((value) => {
+                this.positionX = value;
+                LogUtils.debug(this.TAG, `X coordinate changed to: ${value}`);
+            });
+        }, TextInput);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create("Y ä½ç½®");
+            Text.debugLine("entry/src/main/ets/view/Page.ets(185:7)", "entry");
+            Text.fontSize(16);
+            Text.margin({ top: 16, bottom: 8 });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            TextInput.create({ placeholder: "è¾“å…¥Yåæ ‡", text: this.positionY.toString() });
+            TextInput.debugLine("entry/src/main/ets/view/Page.ets(189:7)", "entry");
+            TextInput.width('80%');
+            TextInput.onChange((value) => {
+                this.positionY = value;
+                LogUtils.debug(this.TAG, `Y coordinate changed to: ${value}`);
+            });
+        }, TextInput);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Button.createWithLabel("å‘å°„");
+            Button.debugLine("entry/src/main/ets/view/Page.ets(196:7)", "entry");
+            Button.onClick(() => {
+                instance.post('/device/pub', {
+                    target_device: "motor1",
+                    horizon_angle: this.positionX,
+                    vertical_angle: this.positionY
+                }).then((response) => {
+                    if (response.data.msg == 'success') {
+                        //æˆåŠŸäº†ä¹‹åŽ
+                        promptAction.showToast({
+                            message: 'å‘é€æˆåŠŸ',
+                            duration: 2000,
+                            bottom: 50
+                        });
+                    }
+                    else if (response.data.code == 0) {
+                        promptAction.showToast({
+                            message: response.data.msg,
+                            duration: 2000,
+                            bottom: 50
+                        });
+                    }
+                });
+            });
+            Button.margin({ top: 20, bottom: 20 });
+        }, Button);
+        Button.pop();
+        Column.pop();
+    }
+    rerender() {
+        this.updateDirtyElements();
+    }
+}
+class Page extends ViewPU {
+    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
+        super(parent, __localStorage, elmtId, extraInfo);
+        if (typeof paramsLambda === "function") {
+            this.paramsGenerator_ = paramsLambda;
+        }
+        this.__intervalTime = new ObservedPropertySimplePU("", this, "intervalTime");
+        this.__positionX = new ObservedPropertySimplePU("", this, "positionX");
+        this.__positionY = new ObservedPropertySimplePU("", this, "positionY");
+        this.__positionX1 = new ObservedPropertySimplePU("", this, "positionX1");
+        this.__positionY1 = new ObservedPropertySimplePU("", this, "positionY1");
+        this.__autoMode = new ObservedPropertySimplePU(false, this, "autoMode");
+        this.deviceId = -1;
+        this.MemoTable = new MemoTable(() => { });
+        this.currentDevice = null;
+        this.autoModePreference = null;
+        this.autoDialogController = new CustomDialogController({
+            builder: () => {
+                let jsDialog = new AutoSettingDialog(this, {
+                    intervalTime: this.intervalTime,
+                    positionX: this.positionX,
+                    positionY: this.positionY,
+                    onSave: (time, x, y) => {
+                        this.intervalTime = time;
+                        this.positionX = x;
+                        this.positionY = y;
+                        this.saveDeviceSettings();
+                    }
+                }, undefined, -1, () => { }, { page: "entry/src/main/ets/view/Page.ets", line: 324, col: 14 });
+                jsDialog.setController(this.autoDialogController);
+                ViewPU.create(jsDialog);
+                let paramsLambda = () => {
+                    return {
+                        intervalTime: this.intervalTime,
+                        positionX: this.positionX,
+                        positionY: this.positionY,
+                        onSave: (time, x, y) => {
+                            this.intervalTime = time;
+                            this.positionX = x;
+                            this.positionY = y;
+                            this.saveDeviceSettings();
+                        }
+                    };
+                };
+                jsDialog.paramsGenerator_ = paramsLambda;
+            }
+        }, this);
+        this.manualDialogController = new CustomDialogController({
+            builder: () => {
+                let jsDialog = new ManualSettingDialog(this, {
+                    positionX: this.positionX1,
+                    positionY: this.positionY1,
+                    onLaunch: (x, y) => {
+                        this.positionX1 = x;
+                        this.positionY1 = y;
+                        this.saveDeviceSettings();
+                    }
+                }, undefined, -1, () => { }, { page: "entry/src/main/ets/view/Page.ets", line: 338, col: 14 });
+                jsDialog.setController(this.manualDialogController);
+                ViewPU.create(jsDialog);
+                let paramsLambda = () => {
+                    return {
+                        positionX: this.positionX1,
+                        positionY: this.positionY1,
+                        onLaunch: (x, y) => {
+                            this.positionX1 = x;
+                            this.positionY1 = y;
+                            this.saveDeviceSettings();
+                        }
+                    };
+                };
+                jsDialog.paramsGenerator_ = paramsLambda;
+            }
+        }, this);
+        this.setInitiallyProvidedValue(params);
+        this.finalizeConstruction();
+    }
+    setInitiallyProvidedValue(params) {
+        if (params.intervalTime !== undefined) {
+            this.intervalTime = params.intervalTime;
+        }
+        if (params.positionX !== undefined) {
+            this.positionX = params.positionX;
+        }
+        if (params.positionY !== undefined) {
+            this.positionY = params.positionY;
+        }
+        if (params.positionX1 !== undefined) {
+            this.positionX1 = params.positionX1;
+        }
+        if (params.positionY1 !== undefined) {
+            this.positionY1 = params.positionY1;
+        }
+        if (params.autoMode !== undefined) {
+            this.autoMode = params.autoMode;
+        }
+        if (params.deviceId !== undefined) {
+            this.deviceId = params.deviceId;
+        }
+        if (params.MemoTable !== undefined) {
+            this.MemoTable = params.MemoTable;
+        }
+        if (params.currentDevice !== undefined) {
+            this.currentDevice = params.currentDevice;
+        }
+        if (params.autoModePreference !== undefined) {
+            this.autoModePreference = params.autoModePreference;
+        }
+        if (params.autoDialogController !== undefined) {
+            this.autoDialogController = params.autoDialogController;
+        }
+        if (params.manualDialogController !== undefined) {
+            this.manualDialogController = params.manualDialogController;
+        }
+    }
+    updateStateVars(params) {
+    }
+    purgeVariableDependenciesOnElmtId(rmElmtId) {
+        this.__intervalTime.purgeDependencyOnElmtId(rmElmtId);
+        this.__positionX.purgeDependencyOnElmtId(rmElmtId);
+        this.__positionY.purgeDependencyOnElmtId(rmElmtId);
+        this.__positionX1.purgeDependencyOnElmtId(rmElmtId);
+        this.__positionY1.purgeDependencyOnElmtId(rmElmtId);
+        this.__autoMode.purgeDependencyOnElmtId(rmElmtId);
+    }
+    aboutToBeDeleted() {
+        this.__intervalTime.aboutToBeDeleted();
+        this.__positionX.aboutToBeDeleted();
+        this.__positionY.aboutToBeDeleted();
+        this.__positionX1.aboutToBeDeleted();
+        this.__positionY1.aboutToBeDeleted();
+        this.__autoMode.aboutToBeDeleted();
+        SubscriberManager.Get().delete(this.id__());
+        this.aboutToBeDeletedInternal();
+    }
+    get intervalTime() {
+        return this.__intervalTime.get();
+    }
+    set intervalTime(newValue) {
+        this.__intervalTime.set(newValue);
+    }
+    get positionX() {
+        return this.__positionX.get();
+    }
+    set positionX(newValue) {
+        this.__positionX.set(newValue);
+    }
+    get positionY() {
+        return this.__positionY.get();
+    }
+    set positionY(newValue) {
+        this.__positionY.set(newValue);
+    }
+    get positionX1() {
+        return this.__positionX1.get();
+    }
+    set positionX1(newValue) {
+        this.__positionX1.set(newValue);
+    }
+    get positionY1() {
+        return this.__positionY1.get();
+    }
+    set positionY1(newValue) {
+        this.__positionY1.set(newValue);
+    }
+    get autoMode() {
+        return this.__autoMode.get();
+    }
+    set autoMode(newValue) {
+        this.__autoMode.set(newValue);
+    }
+    aboutToAppear() {
+        // åˆå§‹åŒ–æœ¬åœ°å­˜å‚¨
+        let context = getContext(this);
+        preferences.getPreferences(context, 'deviceSettings')
+            .then((pref) => {
+            this.autoModePreference = pref;
+            // è¯»å–ä¿å­˜çš„è‡ªåŠ¨å¼€å…³çŠ¶æ€
+            return this.autoModePreference.get(CommonConstants.AUTO_MODE_KEY, false);
+        })
+            .then((value) => {
+            this.autoMode = Boolean(value);
+        })
+            .catch((err) => {
+            Logger.error('Page', `Failed to get preferences: ${err}`);
+        });
+        // èŽ·å–è·¯ç”±å‚æ•°ä¸­çš„è®¾å¤‡ç´¢å¼•
+        let params = router.getParams();
+        // å°†paramsè½¬æ¢ä¸ºRouteParamsç±»åž‹
+        const routeParams = params;
+        if (routeParams && routeParams.id !== undefined) {
+            this.deviceId = routeParams.id;
+            Logger.info('Page', `Loading device with ID: ${this.deviceId}`);
+            // åˆå§‹åŒ–æ•°æ®åº“å¹¶åŠ è½½è®¾å¤‡æ•°æ®
+            this.MemoTable.getRdbStore(() => {
+                this.MemoTable.query((result) => {
+                    for (let device of result) {
+                        if (device.id === this.deviceId) {
+                            this.currentDevice = device;
+                            Logger.info('Page', `Found device: ${JSON.stringify(device)}`);
+                            // è®¾ç½®é¡µé¢çŠ¶æ€
+                            this.intervalTime = device.intervalTime || "";
+                            this.positionX = device.positionX || "";
+                            this.positionY = device.positionY || "";
+                            this.positionX1 = device.positionX || "";
+                            this.positionY1 = device.positionY || "";
+                            break;
+                        }
+                    }
+                });
+            });
+        }
+    }
+    // ä¿®æ”¹ä¿å­˜è®¾å¤‡è®¾ç½®çš„æ–¹æ³•
+    async saveDeviceSettings() {
+        if (this.currentDevice) {
+            // ä¿å­˜è‡ªåŠ¨å¼€å…³çŠ¶æ€åˆ°æœ¬åœ°å­˜å‚¨
+            if (this.autoModePreference) {
+                try {
+                    await this.autoModePreference.put(CommonConstants.AUTO_MODE_KEY, this.autoMode);
+                    if (this.autoModePreference) {
+                        await this.autoModePreference.flush();
+                    }
+                }
+                catch (err) {
+                    Logger.error('Page', `Failed to save auto mode state: ${err}`);
+                }
+            }
+            // ä¿å­˜å…¶ä»–è®¾å¤‡æ•°æ®åˆ°æ•°æ®åº“
+            const updatedDevice = new DeviceDate(this.currentDevice.id, this.currentDevice.name, this.currentDevice.description, this.currentDevice.status, this.currentDevice.Color, this.intervalTime, this.autoMode ? this.positionX : this.positionX1, this.autoMode ? this.positionY : this.positionY1);
+        }
+    }
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Page.ets(350:5)", "entry");
+            Column.width('100%');
+            Column.height('100%');
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.debugLine("entry/src/main/ets/view/Page.ets(351:7)", "entry");
+            Row.width('100%');
+            Row.margin({ top: '48vp', bottom: '12vp' });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('å‘å°„è®¾ç½®');
+            Text.debugLine("entry/src/main/ets/view/Page.ets(352:9)", "entry");
+            Text.fontWeight(700);
+            Text.fontSize('26fp');
+        }, Text);
+        Text.pop();
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Page.ets(359:7)", "entry");
+            Column.backgroundImage({ "id": 16777409, "type": 20000, params: [], "bundleName": "com.example.pageanddata", "moduleName": "entry" });
+            Column.backgroundImageSize({ width: '100%', height: '100%' });
+            Column.width('100%');
+            Column.height('84%');
+            Column.margin({ top: '20vp' });
+            Column.borderRadius('40vp');
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            // è‡ªåŠ¨æ¨¡å¼åŒºå—
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Page.ets(361:9)", "entry");
+            // è‡ªåŠ¨æ¨¡å¼åŒºå—
+            Column.width('90%');
+            // è‡ªåŠ¨æ¨¡å¼åŒºå—
+            Column.padding(16);
+            // è‡ªåŠ¨æ¨¡å¼åŒºå—
+            Column.border({ width: 2, color: "#1A8DFF" });
+            // è‡ªåŠ¨æ¨¡å¼åŒºå—
+            Column.borderRadius(12);
+            // è‡ªåŠ¨æ¨¡å¼åŒºå—
+            Column.backgroundColor(Color.White);
+            // è‡ªåŠ¨æ¨¡å¼åŒºå—
+            Column.margin({ top: 100 });
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.debugLine("entry/src/main/ets/view/Page.ets(362:11)", "entry");
+            Row.justifyContent(FlexAlign.SpaceBetween);
+            Row.width('100%');
+            Row.alignItems(VerticalAlign.Center);
+            Row.margin({ bottom: '12vp' });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('è‡ªåŠ¨');
+            Text.debugLine("entry/src/main/ets/view/Page.ets(363:13)", "entry");
+            Text.fontSize(18);
+            Text.fontWeight(600);
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Toggle.create({ type: ToggleType.Switch, isOn: this.autoMode });
+            Toggle.debugLine("entry/src/main/ets/view/Page.ets(367:13)", "entry");
+            Toggle.width(40);
+            Toggle.height(24);
+            Toggle.onChange((isOn) => {
+                this.autoMode = isOn;
+                this.saveDeviceSettings();
+            });
+        }, Toggle);
+        Toggle.pop();
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create(`å‘å°„é—´éš”ï¼š${this.intervalTime}`);
+            Text.debugLine("entry/src/main/ets/view/Page.ets(380:11)", "entry");
+            Text.fontSize('16fp');
+            Text.textAlign(TextAlign.Start);
+            Text.width('100%');
+            Text.margin({ bottom: '12vp' });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create(`ä½ç½®ï¼šX:${this.positionX} Y:${this.positionY}`);
+            Text.debugLine("entry/src/main/ets/view/Page.ets(386:11)", "entry");
+            Text.fontSize('16fp');
+            Text.textAlign(TextAlign.Start);
+            Text.width('100%');
+            Text.margin({ bottom: '12vp' });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.debugLine("entry/src/main/ets/view/Page.ets(392:11)", "entry");
+            Row.justifyContent(FlexAlign.End);
+            Row.alignItems(VerticalAlign.Center);
+            Row.width('100%');
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777422, "type": 20000, params: [], "bundleName": "com.example.pageanddata", "moduleName": "entry" });
+            Image.debugLine("entry/src/main/ets/view/Page.ets(393:13)", "entry");
+            Image.width(28);
+            Image.height(28);
+            Image.onClick(() => this.autoDialogController.open());
+        }, Image);
+        Row.pop();
+        // è‡ªåŠ¨æ¨¡å¼åŒºå—
+        Column.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+            Column.create();
+            Column.debugLine("entry/src/main/ets/view/Page.ets(410:9)", "entry");
+            // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+            Column.width('90%');
+            // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+            Column.padding(16);
+            // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+            Column.border({ width: 2, color: Color.Blue });
+            // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+            Column.borderRadius(12);
+            // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+            Column.backgroundColor(Color.White);
+            // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+            Column.margin({ top: 50 });
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.debugLine("entry/src/main/ets/view/Page.ets(411:11)", "entry");
+            Row.justifyContent(FlexAlign.SpaceBetween);
+            Row.width('100%');
+            Row.alignItems(VerticalAlign.Center);
+            Row.margin({ bottom: '12vp' });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('æ‰‹åŠ¨');
+            Text.debugLine("entry/src/main/ets/view/Page.ets(412:13)", "entry");
+            Text.fontSize(18);
+            Text.fontWeight(600);
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777423, "type": 20000, params: [], "bundleName": "com.example.pageanddata", "moduleName": "entry" });
+            Image.debugLine("entry/src/main/ets/view/Page.ets(416:13)", "entry");
+            Image.width(28);
+            Image.height(28);
+            Image.onClick(() => this.manualDialogController.open());
+        }, Image);
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create(`ä½ç½®ï¼šX:${this.positionX1} Y:${this.positionY1}`);
+            Text.debugLine("entry/src/main/ets/view/Page.ets(426:11)", "entry");
+            Text.fontSize('16fp');
+            Text.textAlign(TextAlign.Start);
+            Text.width('100%');
+            Text.margin({ bottom: '12vp' });
+        }, Text);
+        Text.pop();
+        // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+        Column.pop();
+        Column.pop();
+        Column.pop();
+    }
+    aboutToDisappear() {
+        // ç¡®ä¿åœ¨ç¦»å¼€é¡µé¢å‰ä¿å­˜æœ€æ–°è®¾ç½®
+        this.saveDeviceSettings();
+        // å…³é—­æœ¬åœ°å­˜å‚¨
+        if (this.autoModePreference) {
+            this.autoModePreference.flush();
+        }
+        // å»¶è¿Ÿå…³é—­æ•°æ®åº“è¿žæŽ¥
+        setTimeout(() => {
+            if (this.MemoTable) {
+                this.MemoTable.deviceDateTable.closeRdbStore();
+                Logger.info('Page', 'Database connection closed');
+            }
+        }, 500);
+    }
+    rerender() {
+        this.updateDirtyElements();
+    }
+    static getEntryName() {
+        return "Page";
+    }
+}
+registerNamedRoute(() => new Page(undefined, {}), "", { bundleName: "com.example.pageanddata", moduleName: "entry", pagePath: "view/Page", pageFullPath: "entry/src/main/ets/view/Page", integratedHsp: "false", moduleType: "followWithHap" });
+//# sourceMappingURL=Page.js.mapÂ—ÙV hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_kits_@kit.ArkUI.d.tsÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceData.etsÙ^D:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\MemoTable.etsÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsÙa hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.data.preferences.d.tsÙpD:\APPkf\huawei_app\PageAndData02\02_Complete\oh_modules\.ohpm\@ohos+axios@2.2.6\oh_modules\@ohos\axios\index.jsÙeD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\constants\CommonConstants.etsÙND:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\view\Page.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath¬shouldEmitJs¯hostModulesInfo¥entryÃÂÙ3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÙ-D:\APPkf\huawei_app\PageAndData02\02_Complete¥entry¥1.0.0Ô  Ù3D:\APPkf\huawei_app\PageAndData02\02_Complete\entryÃÃÚ8timport { prompt, promptAction, PromptAction } from '@kit.ArkUI';
+import { BusinessError } from '@kit.BasicServicesKit';
+import DeviceDate from '../viewmodel/DeviceData'
+import DeviceItem from '../viewmodel/DeviceItem'
+import MemoTable from 'ets/common/database/MemoTable'
+import { router } from '@kit.ArkUI';
+import Logger from 'ets/utils/Logger';
+import preferences from '@ohos.data.preferences';
+import axios, { AxiosResponse } from '@ohos/axios'
+import  LogUtils  from 'ets/utils/Logger';
+import { ToastOptions } from '../common/interfaces/HttpInterfaces';
+
+import CommonConstants from '../common/constants/CommonConstants';
+
+
+interface PostData {
+  target_device: string;
+  horizon_angle: number;
+  vertical_angle: number;
+}
+// åˆ›å»º axios å®žä¾‹
+const instance = axios.create({
+  baseURL: "http://10.33.86.16:8080",
+  timeout: 5000,
+});
+// è‡ªåŠ¨æ¨¡å¼å¼¹çª—ç»„ä»¶
+@CustomDialog
+struct AutoSettingDialog {
+  @State intervalTime: string = " ";
+  @State positionX: string = " ";
+  @State positionY: string = " ";
+  @State autoMode: boolean = false;
+  controller?: CustomDialogController;
+  private onSave: (time: string, x: string, y: string,autoMode:boolean) => void= () => {};
+
+  build() {
+    Column() {
+      Text("æ—¶é—´é—´éš”")
+        .fontSize(16)
+        .margin({ bottom: 8, top: 20 });
+
+      TextInput({ placeholder: "è¾“å…¥æ—¶é—´", text: this.intervalTime })
+        .width('80%')
+        .onChange((value: string) => {
+          this.intervalTime = value;
+        });
+
+      Text("X ä½ç½®")
+        .fontSize(16)
+        .margin({ top: 16, bottom: 8 });
+
+      TextInput({ placeholder: "è¾“å…¥Xåæ ‡", text: this.positionX.toString() })
+        .width('80%')
+        .onChange((value: string) => {
+          this.positionX = value;
+        });
+
+      Text("Y ä½ç½®")
+        .fontSize(16)
+        .margin({ top: 16, bottom: 8 });
+
+      TextInput({ placeholder: "è¾“å…¥Yåæ ‡", text: this.positionY.toString() })
+        .width('80%')
+        .onChange((value: string) => {
+          this.positionY = value;
+        });
+
+      Row() {
+        Button("å–æ¶ˆ")
+          .onClick(() => this.controller?.close())
+          .margin({ right: 8 });
+
+        Button("ä¿å­˜")
+          .onClick(() => {
+            this.onSave(this.intervalTime, this.positionX, this.positionY, this.autoMode);
+            this.controller?.close();
+          });
+      }
+      .justifyContent(FlexAlign.SpaceBetween)
+      .margin({ top: 20, bottom: 20 });
+    }
+    .padding(10)
+  }
+}
+
+
+@CustomDialog
+struct ManualSettingDialog {
+  @State positionX: string = " ";
+  @State positionY: string = " ";
+  controller?: CustomDialogController;
+  private onLaunch: (x: string, y: string) => void = () => {};
+  private uiContext: UIContext = this.getUIContext();
+  
+  private readonly TAG: string = 'ManualSettingDialog';  // æ·»åŠ TAGç”¨äºŽæ—¥å¿—
+  
+
+  //
+  // // æ·»åŠ å“åº”æ‹¦æˆªå™¨
+  //
+  //
+  // // å‘é€å‘å°„è¯·æ±‚
+  // private async sendLaunchRequest(x: string, y: string) {
+  //   LogUtils.info(this.TAG, `Attempting to send launch request with coordinates: x=${x}, y=${y}`);
+  //
+  //   // è¾“å…¥éªŒè¯
+  //   if (!x || !y) {
+  //     LogUtils.warn(this.TAG, 'Invalid input: coordinates cannot be empty');
+  //     const toastOpts: ToastOptions = {
+  //       message: 'è¯·è¾“å…¥æœ‰æ•ˆçš„åæ ‡å€¼',
+  //       duration: 2000
+  //     };
+  //     prompt.showToast(toastOpts);
+  //     return;
+  //   }
+  //
+  //   const horizonAngle = Number(x);
+  //   const verticalAngle = Number(y);
+  //
+  //   if (isNaN(horizonAngle) || isNaN(verticalAngle)) {
+  //     LogUtils.warn(this.TAG, `Invalid number format: x=${x}, y=${y}`);
+  //     const toastOpts: ToastOptions = {
+  //       message: 'è¯·è¾“å…¥æœ‰æ•ˆçš„æ•°å­—',
+  //       duration: 2000
+  //     };
+  //     prompt.showToast(toastOpts);
+  //     return;
+  //   }
+  //
+  //   try {
+  //     const requestData: GeneratedObjectLiteralInterface_1 = {
+  //       target_device: "motor1",
+  //       horizon_angle: horizonAngle,
+  //       vertical_angle: verticalAngle
+  //     };
+  //
+  //     LogUtils.info(this.TAG, `Sending request with data: ${JSON.stringify(requestData)}`);
+  //
+  //     const loadingToast: ToastOptions = {
+  //       message: 'å‘å°„ä¸­...',
+  //       duration: 2000
+  //     };
+  //     prompt.showToast(loadingToast);
+  //
+  //
+  //     LogUtils.info(this.TAG, `Launch request successful: ${JSON.stringify(requestData)}`);
+  //
+  //     const toastOpts: ToastOptions = {
+  //       message: 'å‘å°„æˆåŠŸ',
+  //       duration: 2000
+  //     };
+  //     prompt.showToast(toastOpts);
+  //
+  //     // ä¿å­˜ä½ç½®æ•°æ®å¹¶è°ƒç”¨å›žè°ƒ
+  //     LogUtils.info(this.TAG, `Saving coordinates: x=${x}, y=${y}`);
+  //     this.onLaunch(x, y);
+  //
+  //   } catch (error) {
+  //     LogUtils.error(this.TAG, `Launch request failed: ${error.message}`);
+  //     LogUtils.error(this.TAG, `Error details: ${JSON.stringify(error)}`);
+  //
+  //     const toastOpts: ToastOptions = {
+  //       message: `å‘å°„å¤±è´¥ï¼š${error.message || 'æœªçŸ¥é”™è¯¯'}`,
+  //       duration: 2000
+  //     };
+  //     prompt.showToast(toastOpts);
+  //   }
+  // }
+  //
+
+
+  build() {
+    Column() {
+      Text("X ä½ç½®")
+        .fontSize(16)
+        .margin({ top: 20, bottom: 8 });
+
+      TextInput({ placeholder: "è¾“å…¥Xåæ ‡", text: this.positionX.toString() })
+        .width('80%')
+        .onChange((value: string) => {
+          this.positionX = value;
+          LogUtils.debug(this.TAG, `X coordinate changed to: ${value}`);
+        });
+
+      Text("Y ä½ç½®")
+        .fontSize(16)
+        .margin({ top: 16, bottom: 8 });
+
+      TextInput({ placeholder: "è¾“å…¥Yåæ ‡", text: this.positionY.toString() })
+        .width('80%')
+        .onChange((value: string) => {
+          this.positionY = value;
+          LogUtils.debug(this.TAG, `Y coordinate changed to: ${value}`);
+        });
+
+      Button("å‘å°„")
+        .onClick(() => {
+          instance.post<PostData>('/device/pub', {
+            target_device:"motor1",
+            horizon_angle:this.positionX,
+            vertical_angle:this.positionY
+          }).then((response:AxiosResponse)=>{
+              if(response.data.msg=='success'){
+                //æˆåŠŸäº†ä¹‹åŽ
+                promptAction.showToast({
+                  message: 'å‘é€æˆåŠŸ',
+                  duration: 2000,
+                  bottom: 50
+                });
+              }else if(response.data.code==0){
+                promptAction.showToast({
+                  message: response.data.msg,
+                  duration: 2000,
+                  bottom: 50
+                });
+              }
+          })
+        })
+        .margin({ top: 20, bottom: 20 });
+    }
+    .padding(10)
+  }
+}
+
+@Entry
+@Component
+struct Page {
+  @State intervalTime: string = "";
+  @State positionX: string = "";
+  @State positionY: string = "";
+  @State positionX1: string = "";
+  @State positionY1: string = "";
+  @State autoMode: boolean = false;
+  
+  private deviceId: number = -1;
+  private MemoTable = new MemoTable(() => {});
+  private currentDevice: DeviceDate | null = null;
+  private autoModePreference: preferences.Preferences | null = null;
+  
+  aboutToAppear() {
+    // åˆå§‹åŒ–æœ¬åœ°å­˜å‚¨
+    let context = getContext(this) as Context;
+    preferences.getPreferences(context, 'deviceSettings')
+      .then((pref: preferences.Preferences) => {
+        this.autoModePreference = pref;
+        // è¯»å–ä¿å­˜çš„è‡ªåŠ¨å¼€å…³çŠ¶æ€
+        return this.autoModePreference.get(CommonConstants.AUTO_MODE_KEY, false);
+      })
+      .then((value: preferences.ValueType) => {
+        this.autoMode = Boolean(value);
+      })
+      .catch((err: Error) => {
+        Logger.error('Page', `Failed to get preferences: ${err}`);
+      });
+
+    // èŽ·å–è·¯ç”±å‚æ•°ä¸­çš„è®¾å¤‡ç´¢å¼•
+    let params = router.getParams();
+    // å®šä¹‰ä¸€ä¸ªæŽ¥å£æ¥æè¿°å‚æ•°çš„ç»“æž„
+    interface RouteParams {
+      id?: number;
+    }
+    
+    // å°†paramsè½¬æ¢ä¸ºRouteParamsç±»åž‹
+    const routeParams = params as RouteParams;
+    
+    if (routeParams && routeParams.id !== undefined) {
+      this.deviceId = routeParams.id;
+      Logger.info('Page', `Loading device with ID: ${this.deviceId}`);
+      
+      // åˆå§‹åŒ–æ•°æ®åº“å¹¶åŠ è½½è®¾å¤‡æ•°æ®
+      this.MemoTable.getRdbStore(() => {
+        this.MemoTable.query((result: DeviceDate[]) => {
+          for (let device of result) {
+            if (device.id === this.deviceId) {
+              this.currentDevice = device;
+              Logger.info('Page', `Found device: ${JSON.stringify(device)}`);
+              
+              // è®¾ç½®é¡µé¢çŠ¶æ€
+              this.intervalTime = device.intervalTime || "";
+              this.positionX = device.positionX || "";
+              this.positionY = device.positionY || "";
+              this.positionX1 = device.positionX || "";
+              this.positionY1 = device.positionY || "";
+              break;
+            }
+          }
+        });
+      });
+    }
+  }
+  
+  // ä¿®æ”¹ä¿å­˜è®¾å¤‡è®¾ç½®çš„æ–¹æ³•
+  async saveDeviceSettings() {
+    if (this.currentDevice) {
+      // ä¿å­˜è‡ªåŠ¨å¼€å…³çŠ¶æ€åˆ°æœ¬åœ°å­˜å‚¨
+      if (this.autoModePreference) {
+        try {
+          await this.autoModePreference.put(CommonConstants.AUTO_MODE_KEY, this.autoMode);
+          if (this.autoModePreference) {
+            await this.autoModePreference.flush();
+          }
+        } catch (err) {
+          Logger.error('Page', `Failed to save auto mode state: ${err}`);
+        }
+      }
+
+      // ä¿å­˜å…¶ä»–è®¾å¤‡æ•°æ®åˆ°æ•°æ®åº“
+      const updatedDevice = new DeviceDate(
+        this.currentDevice.id,
+        this.currentDevice.name,
+        this.currentDevice.description,
+        this.currentDevice.status,
+        this.currentDevice.Color,
+        this.intervalTime,
+        this.autoMode ? this.positionX : this.positionX1,
+        this.autoMode ? this.positionY : this.positionY1
+      );
+      
+
+    }
+  }
+
+  private autoDialogController: CustomDialogController = new CustomDialogController({
+    builder: AutoSettingDialog({
+      intervalTime: this.intervalTime,
+      positionX: this.positionX,
+      positionY: this.positionY,
+      onSave: (time: string, x: string, y: string) => {
+        this.intervalTime = time;
+        this.positionX = x;
+        this.positionY = y;
+        this.saveDeviceSettings();
+      }
+    })
+  });
+
+  private manualDialogController: CustomDialogController = new CustomDialogController({
+    builder: ManualSettingDialog({
+      positionX: this.positionX1,
+      positionY: this.positionY1,
+      onLaunch: (x: string, y: string) => {
+        this.positionX1 = x;
+        this.positionY1 = y;
+        this.saveDeviceSettings();
+      }
+    })
+  });
+
+  build() {
+    Column() {
+      Row() {
+        Text('å‘å°„è®¾ç½®')
+          .fontWeight(700)
+          .fontSize('26fp');
+      }
+      .width('100%')
+      .margin({ top: '48vp', bottom: '12vp' });
+      
+      Column() {
+        // è‡ªåŠ¨æ¨¡å¼åŒºå—
+        Column() {
+          Row() {
+            Text('è‡ªåŠ¨')
+              .fontSize(18)
+              .fontWeight(600);
+
+            Toggle({ type: ToggleType.Switch, isOn: this.autoMode })
+              .width(40)
+              .height(24)
+              .onChange((isOn: boolean) => {
+                this.autoMode = isOn;
+                this.saveDeviceSettings();
+              });
+          }
+          .justifyContent(FlexAlign.SpaceBetween)
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .margin({ bottom: '12vp' })
+
+          Text(`å‘å°„é—´éš”ï¼š${this.intervalTime}`)
+            .fontSize('16fp')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .margin({ bottom: '12vp' })
+
+          Text(`ä½ç½®ï¼šX:${this.positionX} Y:${this.positionY}`)
+            .fontSize('16fp')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .margin({ bottom: '12vp' })
+
+          Row() {
+            Image($r('app.media.setting'))
+              .width(28)
+              .height(28)
+              .onClick(() => this.autoDialogController.open());
+          }
+          .justifyContent(FlexAlign.End)
+          .alignItems(VerticalAlign.Center)
+          .width('100%')
+        }
+        .width('90%')
+        .padding(16)
+        .border({ width: 2, color: "#1A8DFF" })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
+        .margin({ top: 100 });
+
+        // æ‰‹åŠ¨æ¨¡å¼åŒºå—
+        Column() {
+          Row() {
+            Text('æ‰‹åŠ¨')
+              .fontSize(18)
+              .fontWeight(600);
+
+            Image($r('app.media.fly'))
+              .width(28)
+              .height(28)
+              .onClick(() => this.manualDialogController.open());
+          }
+          .justifyContent(FlexAlign.SpaceBetween)
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .margin({ bottom: '12vp' })
+
+          Text(`ä½ç½®ï¼šX:${this.positionX1} Y:${this.positionY1}`)
+            .fontSize('16fp')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .margin({ bottom: '12vp' })
+        }
+        .width('90%')
+        .padding(16)
+        .border({ width: 2, color: Color.Blue })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
+        .margin({ top: 50 });
+      }
+      .backgroundImage($r('app.media.backgroundImage'))
+      .backgroundImageSize({ width: '100%', height: '100%' })
+      .width('100%')
+      .height('84%')
+      .margin({ top: '20vp' })
+      .borderRadius('40vp')
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  aboutToDisappear() {
+    // ç¡®ä¿åœ¨ç¦»å¼€é¡µé¢å‰ä¿å­˜æœ€æ–°è®¾ç½®
+    this.saveDeviceSettings();
+    
+    // å…³é—­æœ¬åœ°å­˜å‚¨
+    if (this.autoModePreference) {
+      this.autoModePreference.flush();
+    }
+    
+    // å»¶è¿Ÿå…³é—­æ•°æ®åº“è¿žæŽ¥
+    setTimeout(() => {
+      if (this.MemoTable) {
+        this.MemoTable.deviceDateTable.closeRdbStore();
+        Logger.info('Page', 'Database connection closed');
+      }
+    }, 500);
+  }
+}ÀÔrC—ª@kit.ArkUI¶@ohos.data.preferences·../viewmodel/DeviceDataÙ#../common/constants/CommonConstants½ets/common/database/MemoTable°ets/utils/Logger«@ohos/axiosÔrD—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙV hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_kits_@kit.ArkUI.d.tsÔrE‘¯hostModulesInfo”ÔrF’²hostDependencyName®hostModuleNameª@kit.ArkUI¥entryFª@kit.ArkUI¥entryFª@kit.ArkUI¥entryFª@kit.ArkUI¥entryÃªoh-resolveÂDAÃÙa hvigor_ignore_D:_APPkf_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.data.preferences.d.tsE‘F¶@ohos.data.preferences¥entryÃªoh-resolveÂDAÂÙYD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\viewmodel\DeviceData.etsAÃªoh-resolveÂDAÂÙeD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\constants\CommonConstants.etsAÃªoh-resolveÂDAÂÙ^D:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\common\database\MemoTable.etsAÃªoh-resolveÂDAÂÙQD:\APPkf\huawei_app\PageAndData02\02_Complete\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂDAÂÙpD:\APPkf\huawei_app\PageAndData02\02_Complete\oh_modules\.ohpm\@ohos+axios@2.2.6\oh_modules\@ohos\axios\index.jsAÃªoh-resolveÂ“ÔrG–§version¤fileªsourceRoot§sources¥names¨mappings§Page.js ‘¨Page.etsÜ˜”    ”  ”	  ”  ”  -”  3”)  ?”*  Ì@–”   ” ” ” ”0 0”1 0–”   ” ” ” ”5 5”6 5˜”   ” ”	 	” ” ” ”# #”$ $–”   ” ” ” ”% %”& &–”   ” ” ” ”0 0”1 1–”   ” ” ” %” 2”  2–”  	 ” 	” 	” 	”' 	)”( 	*–”   ” ” ” ”ÌA ÌA”ÌB ÌB’”   ” ˜”   ” ” ” ” ” ” ” ”” ” 	” ”& $”” ” 	” ” “” ” ” ’” ” ‘”  ’”;  ”> #’”8 ”;  ’”8 ”;  ’”7 ”< "•” !ÌQ” !ÌT” !ÌV” !ÌX” !ÌY‘” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’” 	” ’”  ”  ‘” #’” $” $
+–” $” $
+” ÌQ” ÌQ” ÌQ” ÌQ”” %” %
+” %” %–” %” %
+” &	” &” &” &ž” %” %
+” '	” '” '” '”  '”" '”# '”% '”( ' ”* '"”, '$”. '&’” %” %
+ž” )” )” )” )”* )”, )”2 )%”4 )'”8 )+”: )-”> )1”? )2”ÌK )>”ÌM )Ì@–” )” )” *	” *” *”! *™” )” )” +	” +” +”  +”% + ”' +"”) +$—” ,
+” ,” ,”! ,”$ ,”) ,#”* ,$’” -” -	”” /” /
+” /” /–” /” /
+” 0	” 0” 0” 0ž” /” /
+” 1	” 1” 1” 1” 1” 1”! 1”# 1”) 1!”+ 1#”, 1$”. 1&’” /” /
+Ü ” 3” 3” 3” 3”* 3”, 3”3 3&”5 3(”9 3,”; 3.”? 32”Ì@ 33”ÌI 3<”ÌJ 3=”ÌR 3ÌE”ÌT 3ÌG”ÌV 3ÌI–” 3” 3” 4	” 4” 4”! 4™” 3” 3” 5	” 5” 5”  5”% 5 ”' 5"”) 5$—” 6
+” 6” 6” 6”! 6”& 6 ”' 6!’” 7” 7	”” 9” 9
+” 9” 9–” 9” 9
+” :	” :” :” :ž” 9” 9
+” ;	” ;” ;” ;” ;” ;”! ;”# ;”) ;!”+ ;#”, ;$”. ;&’” 9” 9
+Ü ” =” =” =” =”* =”, =”3 =&”5 =(”9 =,”; =.”? =2”Ì@ =3”ÌI =<”ÌJ ==”ÌR =ÌE”ÌT =ÌG”ÌV =ÌI–” =” =” >	” >” >”! >™” =” =” ?	” ?” ?”  ?”% ? ”' ?"”) ?$—” Ì@
+” Ì@” Ì@” Ì@”! Ì@”& Ì@ ”' Ì@!’” ÌA” ÌA	’” ÌC” ÌC	˜” ÌC” ÌC	” ÌN” ÌN” ÌN”( ÌN”) ÌN ”5 ÌN,ž” ÌC” ÌC	” ÌO” ÌO” ÌO” ÌO” ÌO” ÌO”  ÌO”" ÌO”( ÌO”* ÌO!”, ÌO#”. ÌO%”” ÌD” ÌD”# ÌD”' ÌDž” ÌD” ÌD” ÌE” ÌE” ÌE” ÌE”  ÌE”! ÌE”% ÌE”& ÌE”0 ÌE(”2 ÌE*”7 ÌE/”9 ÌE1š” ÌD” ÌD” ÌF” ÌF” ÌF” ÌF”! ÌF”# ÌF”$ ÌF”& ÌF’” ÌD” ÌD”” ÌH” ÌH”# ÌH”' ÌH—” ÌH” ÌH” ÌI” ÌI” ÌI” ÌI”  ÌIÜ ” ÌJ” ÌJ” ÌJ” ÌJ” ÌJ”  ÌJ”! ÌJ”- ÌJ)”/ ÌJ+”3 ÌJ/”4 ÌJ0”= ÌJ9”? ÌJ;”ÌC ÌJ?”ÌD ÌJÌ@”ÌM ÌJÌI”ÌO ÌJÌK”ÌS ÌJÌO”ÌT ÌJÌP”Ì\ ÌJÌX”Ì] ÌJÌY”Ì^ ÌJÌZ˜” ÌK” ÌK” ÌK” ÌK”! ÌK”& ÌK"”( ÌK$”) ÌK%’” ÌL
+” ÌL’” ÌH” ÌH’” ÌC” ÌC	’” $” $
+‘” ÌR’” ÌW” ÌW‘” ÌV ’”8 ÌX”; ÌX ’”8 ÌY”; ÌY •” Ì[5” Ì[8” Ì[:”  Ì[<”! Ì[=•” Ì\!” Ì\%” Ì\&”* Ì\2”, Ì\4’” Ì^!”( Ì^6‘” ÌS’” ÌX	” ÌX’” ÌX	” ÌX’” ÌY	” ÌY’” ÌY	” ÌY’” ÌZ” ÌZ’” Ìa” Ìa’” Ìb” Ìb’” Ìc” Ìc’” Ìd” Ìd’” Ìe” Ìe’” Ìf”> Ìf<’” Ìg”Ìg ÌgÌe’” Ìh” Ìh’” Ìi” Ìi’” Ìj” Ìj’” Ìk”ÌQ ÌkÌO’” Ìl”, Ìl*’” Ìm”" Ìm ’” Ìn” Ìn’” Ìo” Ìo’” Ìp”' Ìp%’” Ìq” Ìq’” Ìr”
+ Ìr’” Ìs” Ìs’” Ìt”( Ìt&’” Ìu”) Ìu'’” Ìv” Ìv’” Ìw”; Ìw9’” Ìx”ÌL ÌxÌJ’” Ìy”, Ìy*’” Ìz”! Ìz’” Ì{” Ì{’” Ì|” Ì|’” Ì}”' Ì}%’” Ì~” Ì~’” Ì”
+ Ì’” Ì€” Ì€’” Ì” Ì’” Ì‚”ÌC Ì‚ÌA’” Ìƒ”% Ìƒ#’” Ì„”) Ì„'’” Ì…”* Ì…(’” Ì†” Ì†’” Ì‡” Ì‡’” Ìˆ”Ì` ÌˆÌ^’” Ì‰” Ì‰’” ÌŠ”/ ÌŠ-’” Ì‹” Ì‹’” ÌŒ” ÌŒ’” Ì” Ì’” ÌŽ”* ÌŽ(’” Ì” Ì’” Ì” Ì’” Ì‘”Ì` Ì‘Ì^’” Ì’” Ì’’” Ì“”, Ì“*’” Ì”” Ì”’” Ì•” Ì•’” Ì–” Ì–’” Ì—”' Ì—%’” Ì˜” Ì˜’” Ì™” Ì™’” Ìš”ÌI ÌšÌG’” Ì›” Ì›’” Ìœ” Ìœ’” Ì” Ì’” Ìž”ÌO ÌžÌM’” ÌŸ”ÌO ÌŸÌM’” Ì ” Ì ’” Ì¡”, Ì¡*’” Ì¢”8 Ì¢6’” Ì£” Ì£’” Ì¤” Ì¤’” Ì¥”' Ì¥%’” Ì¦”
+ Ì¦’” Ì§” Ì§’” Ì¨” Ì¨‘” Ì«’” Ì¬” Ì¬
+–” Ì¬” Ì¬
+” ÌÜ” ÌÜ” ÌÜ” ÌÜ”” Ì­” Ì­
+” Ì­” Ì­–” Ì­” Ì­
+” Ì®	” Ì®” Ì®” Ì®ž” Ì­” Ì­
+” Ì¯	” Ì¯” Ì¯” Ì¯” Ì¯” Ì¯”! Ì¯”# Ì¯”) Ì¯!”+ Ì¯#”, Ì¯$”. Ì¯&’” Ì­” Ì­
+Ü ” Ì±” Ì±” Ì±” Ì±”* Ì±”, Ì±”3 Ì±&”5 Ì±(”9 Ì±,”; Ì±.”? Ì±2”Ì@ Ì±3”ÌI Ì±<”ÌJ Ì±=”ÌR Ì±ÌE”ÌT Ì±ÌG”ÌV Ì±ÌI–” Ì±” Ì±” Ì²	” Ì²” Ì²”! Ì²™” Ì±” Ì±” Ì³	” Ì³” Ì³”  Ì³”% Ì³ ”' Ì³"”) Ì³$—” Ì´
+” Ì´” Ì´” Ì´”! Ì´”& Ì´ ”' Ì´!ž” Ìµ
+” Ìµ” Ìµ” Ìµ” Ìµ”# Ìµ”$ Ìµ”' Ìµ!”) Ìµ#”ÌE Ìµ?”ÌJ ÌµÌD”ÌL ÌµÌF”ÌM ÌµÌG”ÌN ÌµÌH’” Ì¶” Ì¶	”” Ì¸” Ì¸
+” Ì¸” Ì¸–” Ì¸” Ì¸
+” Ì¹	” Ì¹” Ì¹” Ì¹ž” Ì¸” Ì¸
+” Ìº	” Ìº” Ìº” Ìº” Ìº” Ìº”! Ìº”# Ìº”) Ìº!”+ Ìº#”, Ìº$”. Ìº&’” Ì¸” Ì¸
+Ü ” Ì¼” Ì¼” Ì¼” Ì¼”* Ì¼”, Ì¼”3 Ì¼&”5 Ì¼(”9 Ì¼,”; Ì¼.”? Ì¼2”Ì@ Ì¼3”ÌI Ì¼<”ÌJ Ì¼=”ÌR Ì¼ÌE”ÌT Ì¼ÌG”ÌV Ì¼ÌI–” Ì¼” Ì¼” Ì½	” Ì½” Ì½”! Ì½™” Ì¼” Ì¼” Ì¾	” Ì¾” Ì¾”  Ì¾”% Ì¾ ”' Ì¾"”) Ì¾$—” Ì¿
+” Ì¿” Ì¿” Ì¿”! Ì¿”& Ì¿ ”' Ì¿!ž” ÌÀ
+” ÌÀ” ÌÀ” ÌÀ” ÌÀ”# ÌÀ”$ ÌÀ”' ÌÀ!”) ÌÀ#”ÌE ÌÀ?”ÌJ ÌÀÌD”ÌL ÌÀÌF”ÌM ÌÀÌG”ÌN ÌÀÌH’” ÌÁ” ÌÁ	”” ÌÃ” ÌÃ”# ÌÃ”' ÌÃ—” ÌÃ” ÌÃ” ÌÄ	” ÌÄ” ÌÄ” ÌÄ”  ÌÄ—” ÌÅ
+” ÌÅ” ÌÅ” ÌÅ” ÌÅ"”+ ÌÅ/”- ÌÅ1”” ÌÆ”! ÌÆ”# ÌÆ”+ ÌÆ"–” ÌÇ”! ÌÇ”# ÌÇ”' ÌÇ”( ÌÇ”1 ÌÇ(–” ÌÈ”" ÌÈ”$ ÌÈ”( ÌÈ”) ÌÈ ”2 ÌÈ)™” ÌÉ” ÌÉ” ÌÉ” ÌÉ” ÌÉ” ÌÉ”! ÌÉ)”# ÌÉ*”% ÌÉ,š” ÌÊ” ÌÊ”  ÌÊ”! ÌÊ”% ÌÊ”& ÌÊ”) ÌÊ"”- ÌÊ$”6 ÌÊ-”8 ÌÊ.’” ÌË” ÌË•” ÌÌ”$ ÌÌ”% ÌÌ”. ÌÌ&”/ ÌÌ'”” ÌÍ”# ÌÍ”% ÌÍ”+ ÌÍ!”” ÌÎ”$ ÌÎ”& ÌÎ”* ÌÎ ”” ÌÏ”" ÌÏ”$ ÌÏ”& ÌÏ“” ÌÐ” ÌÐ” ÌÐ‘” ÌÑš” ÌÑ” ÌÑ”% ÌÑ”& ÌÑ ”* ÌÑ$”+ ÌÑ%”/ ÌÑ)”3 ÌÑ+”4 ÌÑ,”6 ÌÑ-•” ÌÒ”$ ÌÒ”% ÌÒ”. ÌÒ&”/ ÌÒ'˜” ÌÓ”# ÌÓ”% ÌÓ”- ÌÓ#”. ÌÓ$”2 ÌÓ(”3 ÌÓ)”6 ÌÓ,”” ÌÔ”$ ÌÔ”& ÌÔ”* ÌÔ ”” ÌÕ”" ÌÕ”$ ÌÕ”& ÌÕ“” ÌÖ” ÌÖ” ÌÖ‘” Ì×”” ÌØ
+” ÌØ” ÌØ” ÌØ’” ÌÙ” ÌÙ	ž” ÌÃ” ÌÃ” ÌÚ	” ÌÚ” ÌÚ” ÌÚ” ÌÚ”! ÌÚ”# ÌÚ”% ÌÚ”+ ÌÚ!”- ÌÚ#”/ ÌÚ%”1 ÌÚ'’” ÌÃ” ÌÃ’” Ì¬” Ì¬
+‘” ÌÝ’” Ìâ”
+ Ìâ‘” Ìà ’”; Ìã ”= Ìã"’”8 Ìä”: Ìä’”8 Ìå”: Ìå’”9 Ìæ”; Ìæ ’”9 Ìç”; Ìç ’”7 Ìè”< Ìè"“” Ìê” Ìê” Ìê™” Ìë” Ìë”& Ìë#”' Ìë$”* Ìë'”, Ìë)”/ Ìë+”0 Ìë,”1 Ìë-’” Ìì-”! Ìì1’”" Ìí?”& ÌíÌC’”( ÍB=”> ÍBÌS’” ÍC” ÍC“”# ÍC”4 ÍC”; ÍC–” ÍD”  ÍD”" ÍD”& ÍD”' ÍD”3 ÍD%–” ÍE” ÍE” ÍE”# ÍE”$ ÍE”- ÍE–” ÍF” ÍF” ÍF”# ÍF”$ ÍF”- ÍF›” ÍG” ÍG” ÍG” ÍG”! ÍG”# ÍG”$ ÍG&”& ÍG(”' ÍG1”) ÍG3”+ ÍG5—” ÍH” ÍH” ÍH”) ÍH”, ÍH”0 ÍH ”1 ÍH!—” ÍI” ÍI” ÍI”& ÍI”) ÍI”* ÍI”+ ÍI—” ÍJ” ÍJ” ÍJ”& ÍJ”) ÍJ”* ÍJ”+ ÍJ–” ÍK” ÍK” ÍK”/ ÍK”1 ÍK!”2 ÍK"’” ÍL” ÍL‘” ÍM’”, ÍB
+”Ì@ ÍB–” ÍD”$ ÍD”& ÍD”* ÍD”+ ÍD”7 ÍD%–” ÍE”! ÍE”# ÍE”' ÍE”( ÍE”1 ÍE–” ÍF”! ÍF”# ÍF”' ÍF”( ÍF”1 ÍF›” ÍG” ÍG”  ÍG”! ÍG”% ÍG”' ÍG”( ÍG&”* ÍG(”+ ÍG1”- ÍG3”/ ÍG5—” ÍH”  ÍH”! ÍH”- ÍH”0 ÍH”4 ÍH ”5 ÍH!—” ÍI”  ÍI”! ÍI”* ÍI”- ÍI”. ÍI”/ ÍI—” ÍJ”  ÍJ”! ÍJ”* ÍJ”- ÍJ”. ÍJ”/ ÍJ–” ÍK”  ÍK”! ÍK”3 ÍK”5 ÍK!”6 ÍK"’” ÍL” ÍL‘” ÍM’”* ÍP?”Ì@ ÍPÌU’” ÍQ” ÍQ“”# ÍQ”6 ÍQ ”= ÍQ!–” ÍR” ÍR” ÍR”# ÍR”$ ÍR”. ÍR –” ÍS” ÍS” ÍS”# ÍS”$ ÍS”. ÍS ™” ÍT” ÍT” ÍT” ÍT”  ÍT”" ÍT”# ÍT%”% ÍT'”' ÍT)—” ÍU” ÍU” ÍU”' ÍU”* ÍU”+ ÍU”, ÍU—” ÍV” ÍV” ÍV”' ÍV”* ÍV”+ ÍV”, ÍV–” ÍW” ÍW” ÍW”/ ÍW”1 ÍW!”2 ÍW"’” ÍX” ÍX‘” ÍY’”, ÍP
+”ÌB ÍP –” ÍR”! ÍR”# ÍR”' ÍR”( ÍR”2 ÍR –” ÍS”! ÍS”# ÍS”' ÍS”( ÍS”2 ÍS ™” ÍT”  ÍT”" ÍT”# ÍT”$ ÍT”& ÍT”' ÍT%”) ÍT'”+ ÍT)—” ÍU”  ÍU”! ÍU”+ ÍU”. ÍU”/ ÍU”0 ÍU—” ÍV”  ÍV”! ÍV”+ ÍV”. ÍV”/ ÍV”0 ÍV–” ÍW”  ÍW”! ÍW”3 ÍW”5 ÍW!”6 ÍW"’” ÍX” ÍX‘” ÍY‘” ÌÞ’” Ìã	” Ìã’” Ìã	” Ìã’” Ìä	” Ìä’” Ìä	” Ìä’” Ìå	” Ìå’” Ìå	” Ìå’” Ìæ	” Ìæ’” Ìæ	” Ìæ’” Ìç	” Ìç’” Ìç	” Ìç’” Ìè	” Ìè’” Ìè	” Ìè’” Ìï” Ìï’” Ìð” Ìð™” Ìñ” Ìñ” Ìñ” Ìñ”  Ìñ”! Ìñ”% Ìñ!”& Ìñ-”' Ìñ.™” Ìò” Ìò” Ìò”" Ìò”# Ìò”* Ìò&”, Ìò(”< Ìò8”= Ìò9—” Ìó” Ìó” Ìó” Ìó” Ìó*” Ìó,” Ìó.—” Ìô” Ìô” Ìô”# Ìô”& Ìô"”* Ìô&”+ Ìô'’” Ìõ” ÌõŸ” Ìö” Ìö” Ìö” Ìö”* Ìö&”+ Ìö'”. Ìö*”/ Ìö+”> Ìö:”? Ìö;”ÌL ÌöÌH”ÌN ÌöÌJ”ÌS ÌöÌO”ÌT ÌöÌP”ÌU ÌöÌQ“” Ì÷”	 Ì÷”
+ Ì÷—” Ìø” Ìø” Ìø” Ìø” Ìø)” Ìø+” Ìø-š” Ìù” Ìù” Ìù” Ìù” Ìù”# Ìù”$ Ìù ”) Ìù%”* Ìù&”+ Ìù'“” Ìú”	 Ìú”
+ Ìú—” Ìû” Ìû” Ìû” Ìû” Ìû” Ìû” Ìûœ” Ìü” Ìü” Ìü” Ìü” Ìü” Ìü”! Ìü”? Ìü;”ÌB Ìü>”ÌD ÌüÌ@”ÌE ÌüÌA”ÌF ÌüÌB”” Ìý”	 Ìý”
+ Ìý” Ìý	’” Ìÿ” Ìÿ™” Í ” Í ” Í ” Í ” Í ” Í ”% Í !”' Í #”( Í $’” Í”" Í–” Í” Í
+” Í” Í”" Í-”# Í.š” Í	” Í	” Í	” Í	”& Í	"”' Í	#”) Í	%”. Í	*”7 Í	3”9 Í	5™” Í
+” Í
+
+” Í
+” Í
+” Í
+”' Í
+!”( Í
+"”* Í
+$”+ Í
+%ž” Í” Í” Í” Í” Í” Í”  Í”; Í5”? Í9”Ì@ Í:”ÌH ÍÌB”ÌJ ÍÌD”ÌK ÍÌE”ÌL ÍÌF’” Í” Í™” Í” Í
+” Í” Í” Í”& Í ”' Í!”* Í$”, Í&›” Í” Í” Í” Í” Í”$ Í”% Í”& Í”, Í2”. Í4”0 Í6—” Í
+” Í” Í”# Í”' Í”- Í#”/ Í%š” Í” Í”" Í”# Í”% Í”* Í”. Í"”/ Í#”7 Í+”9 Í-—” Í”  Í”! Í”. Í ”1 Í#”7 Í)”8 Í*Ü ” Í”" Í”# Í”' Í”( Í”. Í ”0 Í"”ÌA Í3”ÌE Í7”ÌF Í8”ÌO ÍÌA”ÌP ÍÌB”ÌV ÍÌH”ÌW ÍÌI”ÌY ÍÌK”ÌZ ÍÌL”Ì[ ÍÌM’” Í”% Í›” Í”  Í”! Í”- Í”0 Í"”6 Í(”7 Í)”ÌC Í5”ÌG Í9”ÌI Í;”ÌJ Í<›” Í”  Í”! Í”* Í”- Í”3 Í%”4 Í&”= Í/”ÌA Í3”ÌC Í5”ÌD Í6›” Í”  Í”! Í”* Í”- Í”3 Í%”4 Í&”= Í/”ÌA Í3”ÌC Í5”ÌD Í6›” Í”  Í”! Í”+ Í”. Í ”4 Í&”5 Í'”> Í0”ÌB Í4”ÌD Í6”ÌE Í7›” Í”  Í”! Í”+ Í”. Í ”4 Í&”5 Í'”> Í0”ÌB Í4”ÌD Í6”ÌE Í7’” Í”" Í‘” Í‘” Í”” Í” Í	” Í
+” Í”” Í” Í” Í” Í	‘”	 Í ’” Í!” Í!’” Í#” Í#”” Í$”	 Í$”
+ Í$” Í$–” Í%” Í%” Í%” Í%” Í%”  Í%’” Í&” Í&–” Í'” Í'
+” Í'” Í'”' Í'!”) Í'#’” Í(” Í(Ü ” Í)
+” Í)” Í)” Í)”1 Í)'”2 Í)(”5 Í)+”6 Í),”ÌE Í);”ÌF Í)<”ÌS Í)ÌI”ÌU Í)ÌK”ÌY Í)ÌO”ÌZ Í)ÌP”Ìb Í)ÌX”Ìc Í)ÌY”Ìd Í)ÌZ–” Í*
+” Í*” Í*” Í*”/ Í*%”1 Í*'™” Í+” Í+”" Í+”# Í+”5 Í+)”6 Í+*”; Í+/”= Í+1”> Í+2‘” Í,‘” Í-	”” Í-
+” Í-” Í-” Í-œ” Í.
+” Í.” Í.”  Í.”! Í.”' Í.”) Í.”ÌL Í.ÌB”ÌO Í.ÌE”ÌQ Í.ÌG”ÌR Í.ÌH”ÌS Í.ÌI‘” Í/	‘” Í0’” Í2” Í2Ü J” Í3” Í3” Í3”" Í3”& Í3 ”0 Í3*”1 Í4”5 Í4”6 Í4”ÌC Í4”ÌD Í4”ÌF Í4”ÌH Í5”ÌL Í5”ÌM Í5”ÌZ Í5”Ì[ Í5”Ì_ Í5”Ìa Í6”Ìe Í6”Ìf Í6”Ìs Í6”Ìt Í6”Ì Í6&”Ì Í7”Ì… Í7”Ì† Í7”Ì“ Í7”Ì” Í7”Ìš Í7!”Ìœ Í8”Ì  Í8”Ì¡ Í8”Ì® Í8”Ì¯ Í8”Ì´ Í8 ”Ì¶ Í9”Ìº Í9”Ì» Í9”ÌÇ Í9”ÌÉ Í:”ÌÍ Í:”ÌÎ Í:”ÌÖ Í:”Ì× Í:”ÌØ Í:”ÌÙ Í:”ÌÝ Í:”ÌÞ Í:”Ìç Í:&”Ìè Í:'”Ìé Í:(”Ìê Í:)”Ìî Í:-”Ìï Í:.”Ìù Í:8”Ìû Í;”Ìÿ Í;”Í  Í;”Í Í;”Í	 Í;”Í
+ Í;”Í Í;”Í Í;”Í Í;”Í Í;&”Í Í;'”Í Í;(”Í Í;)”Í  Í;-”Í! Í;.”Í+ Í;8”Í, Í<”Í- Í<‘”	 Í?’” Í@” Í@‘” Í\’” Í]” Í]
+–” Í]” Í]
+” Í½” Í½
+” Í½” Í½–” Í]” Í]
+” Í¾” Í¾” Í¾”  Í¾’” Í^” Í^	–” Í^” Í^	” Íc” Íc” Íc” Ícž” Í^” Í^	” Íd” Íd” Íd” Íd” Íd” Íd”$ Íd”& Íd”, Íd#”. Íd%”4 Íd+”6 Íd-”” Í_” Í_” Í_” Í_–” Í_” Í_” Í`” Í`” Í`” Í`–” Í_” Í_” Ía” Ía” Ía”  Ía’” Í_” Í_’” Í^” Í^	’” Íf” Íf”” Íf” Íf” Í¶”" Í¶ž” Íf” Íf” Í·”& Í·”' Í·”) Í·”. Í·"”0 Í·$”6 Í·*”8 Í·,”> Í·2”Ì@ Í·4”ÌF Í·:”ÌH Í·<–” Íf” Íf” Í¸” Í¸” Í¸” Í¸–” Íf” Íf” Í¹” Í¹” Í¹” Í¹š” Íf” Íf” Íº” Íº” Íº” Íº” Íº”! Íº”' Íº”) Íº–” Íf” Íf” Í»” Í»”  Í»”& Í»’” Íg” Íg’” Íh” Íh’” Íg” Íg–” Íh” Íh” Í‘	” Í‘” Í‘” Í‘’” Íg” Íg–” Íh” Íh” Í’	” Í’” Í’” Í’’” Íg” Ígž” Íh” Íh” Í“	” Í“” Í“” Í“”! Í“”# Í“”$ Í“”& Í“”+ Í“!”- Í“#”6 Í“,”8 Í“.’” Íg” Íg–” Íh” Íh” Í”	” Í””  Í””" Í”’” Íg” Íg˜” Íh” Íh” Í•	”" Í•”# Í•”( Í•”) Í•”. Í•$’” Íg” Ígš” Íh” Íh” Í–	” Í–” Í–” Í–” Í–”! Í–”$ Í–”& Í–’” Íi
+” Íi˜” Íi
+” Íi” Ív” Ív” Ív”( Ív#”) Ív$”5 Ív0–” Íi
+” Íi” Íw” Íw” Íw” Íw˜” Íi
+” Íi” Íx” Íx” Íx”( Íx#”) Íx$”/ Íx*š” Íi
+” Íi” Íy” Íy” Íy” Íy” Íy”! Íy”' Íy"”) Íy$”” Íj” Íj” Íj” Íj–” Íj” Íj” Ík” Ík” Ík” Ík–” Íj” Íj” Íl” Íl” Íl” Íl’” Íj” ÍjÜ ” Ín” Ín” Ín” Ín”  Ín”" Ín”, Ín%”- Ín&”3 Ín,”5 Ín.”9 Ín2”; Ín4”? Ín8”Ì@ Ín9”ÌH ÍnÌA”ÌJ ÍnÌC–” Ín” Ín” Ío” Ío” Ío” Ío–” Ín” Ín” Íp” Íp” Íp” Íp™” Ín” Ín” Íq” Íq” Íq” Íq”! Íq&”# Íq(”% Íq*—” Ír” Ír” Ír” Ír”  Ír ”$ Ír$”% Ír%–” Ís” Ís” Ís”' Ís'”) Ís)”* Ís*’” Ít” Ít’” Ín” Ín’” Íi
+” Íi˜” Í{
+” Í{” Í{”  Í{”$ Í{”% Í{”1 Í{(”3 Í{*–” Í{
+” Í{” Í|” Í|” Í|”  Í|˜” Í{
+” Í{” Í}” Í}” Í}”$ Í} ”% Í}!”* Í}&–” Í{
+” Í{” Í~” Í~” Í~” Í~š” Í{
+” Í{” Í” Í” Í” Í”  Í”" Í”( Í$”* Í&’” Í{
+” Í{œ” Í
+” Í” Í”  Í”$ Í”% Í”. Í%”4 Í+”8 Í/”9 Í0”ÌB Í9”ÌD Í;–” Í
+” Í” Í‚” Í‚” Í‚”  Í‚˜” Í
+” Í” Íƒ” Íƒ” Íƒ”$ Íƒ ”% Íƒ!”* Íƒ&–” Í
+” Í” Í„” Í„” Í„” Í„š” Í
+” Í” Í…” Í…” Í…” Í…”  Í…”" Í…”( Í…$”* Í…&’” Í
+” Í’” Í‡
+” Í‡˜” Í‡
+” Í‡” Í” Í” Í”( Í#”) Í$”, Í'˜” Í‡
+” Í‡” ÍŽ” ÍŽ” ÍŽ”( ÍŽ#”) ÍŽ$”/ ÍŽ*–” Í‡
+” Í‡” Í” Í” Í” Í’” Íˆ” Íˆ–” Íˆ” Íˆ” Í‰” Í‰” Í‰” Í‰–” Íˆ” Íˆ” ÍŠ” ÍŠ” ÍŠ” ÍŠž” Íˆ” Íˆ” Í‹” Í‹” Í‹” Í‹” Í‹”  Í‹”$ Í‹!”% Í‹"”9 Í‹6”: Í‹7”> Í‹;”Ì@ Í‹=’” Í‡
+” Í‡’” Íg” Íg’” Íh” Íh’” Í˜” Í˜’” Í™” Í™’” Í˜” Í˜–” Í™” Í™” Í¯	” Í¯” Í¯” Í¯’” Í˜” Í˜–” Í™” Í™” Í°	” Í°” Í°” Í°’” Í˜” Í˜Ü ” Í™” Í™” Í±	” Í±” Í±” Í±”! Í±”# Í±”$ Í±”& Í±”+ Í±!”- Í±#”2 Í±(”3 Í±)”7 Í±-”9 Í±/’” Í˜” Í˜–” Í™” Í™” Í²	” Í²”  Í²”" Í²’” Í˜” Í˜˜” Í™” Í™” Í³	”" Í³”# Í³”( Í³”) Í³”. Í³$’” Í˜” Í˜š” Í™” Í™” Í´	” Í´” Í´” Í´” Í´”! Í´”# Í´”% Í´’” Íš
+” Íš˜” Íš
+” Íš” Í¤” Í¤” Í¤”( Í¤#”) Í¤$”5 Í¤0–” Íš
+” Íš” Í¥” Í¥” Í¥” Í¥˜” Íš
+” Íš” Í¦” Í¦” Í¦”( Í¦#”) Í¦$”/ Í¦*š” Íš
+” Íš” Í§” Í§” Í§” Í§” Í§”! Í§”' Í§"”) Í§$”” Í›” Í›” Í›” Í›–” Í›” Í›” Íœ” Íœ” Íœ” Íœ–” Í›” Í›” Í” Í” Í” Í’” Í›” Í›’” ÍŸ” ÍŸ–” ÍŸ” ÍŸ” Í ” Í ” Í ” Í –” ÍŸ” ÍŸ” Í¡” Í¡” Í¡” Í¡ž” ÍŸ” ÍŸ” Í¢” Í¢” Í¢” Í¢” Í¢”  Í¢”$ Í¢!”% Í¢"”; Í¢8”< Í¢9”Ì@ Í¢=”ÌB Í¢?’” Íš
+” Íšœ” Í©
+” Í©” Í©”  Í©”$ Í©”% Í©”/ Í©&”5 Í©,”9 Í©0”: Í©1”ÌD Í©;”ÌF Í©=–” Í©
+” Í©” Íª” Íª” Íª”  Íª˜” Í©
+” Í©” Í«” Í«” Í«”$ Í« ”% Í«!”* Í«&–” Í©
+” Í©” Í¬” Í¬” Í¬” Í¬š” Í©
+” Í©” Í­” Í­” Í­” Í­”  Í­”" Í­”( Í­$”* Í­&’” Í©
+” Í©’” Í˜” Í˜’” Í™” Í™’” Íf” Íf’” Í]” Í]
+‘” Í¿’” ÍÁ” ÍÁ’” ÍÂ” ÍÂ–” ÍÃ” ÍÃ” ÍÃ	” ÍÃ”! ÍÃ”" ÍÃ’” ÍÅ” ÍÅ–” ÍÆ” ÍÆ” ÍÆ” ÍÆ”# ÍÆ”% ÍÆ!˜” ÍÇ” ÍÇ
+” ÍÇ”# ÍÇ”$ ÍÇ”) ÍÇ#”+ ÍÇ%”, ÍÇ&‘”	 ÍÈ’” ÍÊ” ÍÊ•” ÍË” ÍË” ÍË” ÍË” ÍË–” ÍÌ” ÍÌ
+” ÍÌ” ÍÌ” ÍÌ”  ÍÌš” ÍÍ” ÍÍ” ÍÍ” ÍÍ” ÍÍ”. ÍÍ&”/ ÍÍ'”< ÍÍ4”> ÍÍ6”? ÍÍ7š” ÍÎ” ÍÎ” ÍÎ” ÍÎ” ÍÎ”" ÍÎ”$ ÍÎ”Ì@ ÍÎ8”ÌA ÍÎ9”ÌB ÍÎ:‘” ÍÏ–” ÍÐ”	 ÍÐ” ÍÐ” ÍÐ
+” ÍÐ” ÍÐ’” ÍÑ” ÍÑÔrH–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ"‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  ÌŽ ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ìž ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌÐ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  ÌÝ ‘”  ÌÞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìð ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìý ‘”  Ìþ ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  ÍŽ ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Íž ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ‘”  Í¼ ‘”  Í½ ‘”  Í¾ ‘”  Í¿ ‘”  ÍÀ ‘”  ÍÁ ‘”  ÍÂ ‘”  ÍÃ ‘”  ÍÄ ‘”  ÍÅ ‘”  ÍÆ ‘”  ÍÇ ‘”  ÍÈ ‘”  ÍÉ ‘”  ÍÊ ‘”  ÍË ‘”  ÍÌ ‘”  ÍÍ ‘”  ÍÎ ‘”  ÍÏ ‘”  ÍÐ ‘”  ÍÑ ‘”  ÍÒ ‘”  ÍÓ ‘”  ÍÔ ‘”  ÍÕ ‘”  ÍÖ ‘”  Í× ‘”  ÍØ ‘”  ÍÙ ‘”  ÍÚ ‘”  ÍÛ ‘”  ÍÜ ‘”  ÍÝ ‘”  ÍÞ ‘”  Íß ‘”  Íà ‘”  Íá ‘”  Íâ ‘”  Íã ‘”  Íä ‘”  Íå ‘”  Íæ ‘”  Íç ‘”  Íè ‘”  Íé ‘”  Íê ‘”  Íë ‘”  Íì ‘”  Íí ‘”  Íî ‘”  Íï ‘”  Íð ‘”  Íñ ‘”  Íò ‘”  Íó ‘”  Íô ‘”  Íõ ‘”  Íö ‘”  Í÷ ‘”  Íø ‘”  Íù ‘”  Íú ‘”  Íû ‘”  Íü ‘”  Íý ‘”  Íþ ‘”  Íÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  ÍŽ ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Íž ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ‘”  Í¼ ‘”  Í½ ‘”  Í¾ ‘”  Í¿ ‘”  ÍÀ ‘”  ÍÁ ‘”  ÍÂ ‘”  ÍÃ ‘”  ÍÄ ‘”  ÍÅ ‘”  ÍÆ ‘”  ÍÇ ‘”  ÍÈ ‘”  ÍÉ ‘”  ÍÊ ‘”  ÍË ‘”  ÍÌ ‘”  ÍÍ ‘”  ÍÎ ‘”  ÍÏ ‘”  ÍÐ ‘”  ÍÑ ‘”  ÍÒ ‘”  ÍÓ ‘”  ÍÔ ‘”  ÍÕ ‘”  ÍÖ ‘”  Í× ‘”  ÍØ ‘”  ÍÙ ‘”  ÍÚ ‘”  ÍÛ ‘”  ÍÜ ‘”  ÍÝ ‘”  ÍÞ ‘”  Íß ‘”  Íà ‘”  Íá ‘”  Íâ ‘”  Íã ‘”  Íä ‘”  Íå ‘”  Íæ ‘”  Íç ‘”  Íè ‘”  Íé ‘”  Íê ‘”  Íë ‘”  Íì ‘”  Íí ‘”  Íî ‘”  Íï ‘”  Íð ‘”  Íñ ‘”  Íò ‘”  Íó ‘”  Íô ‘”  Íõ ‘”  Íö ‘”  Í÷ ‘”  Íø ‘”  Íù ‘”  Íú ‘”  Íû ‘”  Íü ‘”  Íý ‘”  Íþ ‘”  Íÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ÔrI’§missing¦pluginÃ¦genAbcÂÔ  ÔrJ”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache™ÔrK•¤type¥start£endªspecifiers¦source±ImportDeclarationÌ€Ìª‘ÔrL•¤type¥start£end¨imported¥local¯ImportSpecifierÌ‰Ì•ÔrM”¤type¥start£end¤nameªIdentifierÌ‰Ì•¬promptActionMªIdentifierÌ‰Ì•¬promptActionÔrN•¤type¥start£end¥value£raw§LiteralÌÌ©ª@kit.ArkUI¬'@kit.ArkUI'K±ImportDeclarationÌ¬ÌÝ‘ÔrO”¤type¥start£end¥local¶ImportDefaultSpecifierÌ³Ì½MªIdentifierÌ³Ì½ªDeviceDateN§LiteralÌÃÌÜ·../viewmodel/DeviceData¹'../viewmodel/DeviceData'K±ImportDeclarationÌßÍ‘O¶ImportDefaultSpecifierÌæÌïMªIdentifierÌæÌï©MemoTableN§LiteralÌõÍ½ets/common/database/MemoTable¿'ets/common/database/MemoTable'K±ImportDeclarationÍÍ;‘L¯ImportSpecifierÍ Í&MªIdentifierÍ Í&¦routerMªIdentifierÍ Í&¦routerN§LiteralÍ.Í:ª@kit.ArkUI¬'@kit.ArkUI'K±ImportDeclarationÍ=Íc‘O¶ImportDefaultSpecifierÍDÍJMªIdentifierÍDÍJ¦LoggerN§LiteralÍPÍb°ets/utils/Logger²'ets/utils/Logger'K±ImportDeclarationÍeÍ–‘O¶ImportDefaultSpecifierÍlÍwMªIdentifierÍlÍw«preferencesN§LiteralÍ}Í•¶@ohos.data.preferences¸'@ohos.data.preferences'K±ImportDeclarationÍ˜Í¸‘O¶ImportDefaultSpecifierÍŸÍ¤MªIdentifierÍŸÍ¤¥axiosN§LiteralÍªÍ·«@ohos/axios­'@ohos/axios'K±ImportDeclarationÍºÍâ‘O¶ImportDefaultSpecifierÍÁÍÉMªIdentifierÍÁÍÉ¨LogUtilsN§LiteralÍÏÍá°ets/utils/Logger²'ets/utils/Logger'K±ImportDeclarationÍäÍ&‘O¶ImportDefaultSpecifierÍëÍúMªIdentifierÍëÍú¯CommonConstantsN§LiteralÍ Í%Ù#../common/constants/CommonConstantsÙ%'../common/constants/CommonConstants'

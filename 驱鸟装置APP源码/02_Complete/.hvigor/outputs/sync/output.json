@@ -1,0 +1,152 @@
+{
+  "ohos-module-entry": {
+    "SELECT_TARGET": "default",
+    "MODULE_BUILD_DIR": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build",
+    "DEPENDENCY_INFO": {
+      "@ohos/axios": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\oh_modules\\.ohpm\\@ohos+axios@2.2.6\\oh_modules\\@ohos\\axios"
+    },
+    "TARGETS": {
+      "default": {
+        "SOURCE_ROOT": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\src\\main",
+        "RESOURCES_PATH": [
+          "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\src\\main\\resources"
+        ],
+        "BUILD_PATH": {
+          "OUTPUT_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\outputs\\default",
+          "INTERMEDIA_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates",
+          "JS_ASSETS_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\loader_out\\default",
+          "JS_LITE_ASSETS_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\loader_out_lite\\default",
+          "RES_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\res\\default",
+          "RES_PROFILE_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\res\\default\\resources\\base\\profile",
+          "ETS_SUPER_VISUAL_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\cache\\default\\default@CompileArkTS\\esmodule",
+          "JS_SUPER_VISUAL_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\cache\\default\\default@CompileJS\\jsbundle",
+          "WORKER_LOADER": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\loader\\default\\loader.json",
+          "MANIFEST_JSON": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\manifest\\default",
+          "OUTPUT_METADATA_JSON": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\hap_metadata\\default\\output_metadata.json",
+          "SOURCE_MAP_DIR": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\source_map\\default"
+        },
+        "BUILD_OPTION": {
+          "debuggable": true
+        }
+      },
+      "ohosTest": {
+        "SOURCE_ROOT": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\src\\ohosTest",
+        "RESOURCES_PATH": [
+          "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\src\\ohosTest\\resources"
+        ],
+        "BUILD_PATH": {
+          "OUTPUT_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\outputs\\ohosTest",
+          "INTERMEDIA_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates",
+          "JS_ASSETS_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\loader_out\\ohosTest",
+          "JS_LITE_ASSETS_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\loader_out_lite\\ohosTest",
+          "RES_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\res\\ohosTest",
+          "RES_PROFILE_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\res\\ohosTest\\resources\\base\\profile",
+          "ETS_SUPER_VISUAL_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\cache\\ohosTest\\ohosTest@OhosTestCompileArkTS\\esmodule",
+          "JS_SUPER_VISUAL_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\cache\\ohosTest\\ohosTest@OhosTestCompileJS\\jsbundle",
+          "WORKER_LOADER": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\loader\\ohosTest\\loader.json",
+          "MANIFEST_JSON": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\manifest\\ohosTest",
+          "OUTPUT_METADATA_JSON": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\hap_metadata\\ohosTest\\output_metadata.json",
+          "SOURCE_MAP_DIR": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry\\build\\default\\intermediates\\source_map\\ohosTest"
+        },
+        "BUILD_OPTION": {
+          "debuggable": true
+        }
+      }
+    },
+    "BUILD_OPTION": {
+      "default-default": {
+        "debuggable": true,
+        "copyFrom": "default"
+      }
+    },
+    "BUILD_PROFILE_OPT": {
+      "apiType": "stageMode",
+      "buildOption": {},
+      "targets": [
+        {
+          "name": "default",
+          "runtimeOS": "HarmonyOS"
+        },
+        {
+          "name": "ohosTest",
+          "runtimeOS": "HarmonyOS"
+        }
+      ]
+    },
+    "BUILD_CACHE_DIR": ""
+  },
+  "ohos-project": {
+    "SELECT_PRODUCT_NAME": "default",
+    "MODULE_BUILD_DIR": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\build",
+    "BUNDLE_NAME": "com.example.pageanddata",
+    "BUILD_PATH": {
+      "OUTPUT_PATH": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\build\\outputs\\default"
+    },
+    "MODULES": [
+      {
+        "name": "entry",
+        "srcPath": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete\\entry",
+        "targets": [
+          {
+            "name": "default",
+            "applyToProducts": [
+              "default"
+            ]
+          }
+        ],
+        "belongProjectPath": "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete"
+      }
+    ],
+    "PROFILE_OPT": {
+      "app": {
+        "signingConfigs": [
+          {
+            "name": "default",
+            "type": "HarmonyOS",
+            "material": {
+              "certpath": "C:\\Users\\碎碎念\\.ohos\\config\\default_02_Complete_1XDqRtrPVLju-tvA0NRhntJ1WUg_dOIR6XFLXIqiEEg=.cer",
+              "storePassword": "0000001B6F1EC995097D7AA381FBD92FB9CE4B74C19DFD1B8DB7EB68B4E49C329084A43124295108DE6F2C",
+              "keyAlias": "debugKey",
+              "keyPassword": "0000001B84EF5D0C118722B8DFFC70F829FB77542E2C80EB9BC1FB549F4907E3D5A74E231D84BF39F2D977",
+              "profile": "C:\\Users\\碎碎念\\.ohos\\config\\default_02_Complete_1XDqRtrPVLju-tvA0NRhntJ1WUg_dOIR6XFLXIqiEEg=.p7b",
+              "signAlg": "SHA256withECDSA",
+              "storeFile": "C:\\Users\\碎碎念\\.ohos\\config\\default_02_Complete_1XDqRtrPVLju-tvA0NRhntJ1WUg_dOIR6XFLXIqiEEg=.p12"
+            }
+          }
+        ],
+        "products": [
+          {
+            "name": "default",
+            "signingConfig": "default",
+            "compatibleSdkVersion": "5.0.0(12)",
+            "runtimeOS": "HarmonyOS"
+          }
+        ]
+      },
+      "modules": [
+        {
+          "name": "entry",
+          "srcPath": "./entry",
+          "targets": [
+            {
+              "name": "default",
+              "applyToProducts": [
+                "default"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "CONFIG_PROPERTIES": {
+      "enableSignTask": true,
+      "skipNativeIncremental": false,
+      "hvigor.keepDependency": true
+    },
+    "OVERALL_PROJECT_PATHS": [
+      "D:\\APPkf\\huawei_app\\PageAndData02\\02_Complete"
+    ],
+    "BUILD_CACHE_DIR": ""
+  },
+  "version": 1
+}
